@@ -1,0 +1,24 @@
+﻿"Año";"Periodo";"Homicidios registrados por los cuerpos de seguridad"
+"2012";"Trimestre 3";"275"
+"2013";"Trimestre 3";"246"
+"2014";"Trimestre 3";"239"
+"2015";"Trimestre 3";"214"
+"2016";"Trimestre 3";"229"
+"2017";"Trimestre 3";"236"
+"2018";"Trimestre 3";"228"
+"2019";"Trimestre 3";"249"
+"2020";"Trimestre 3";"232"
+;;
+;;
+"Métrica":"Homicidios registrados por los cuerpos de seguridad"
+"Fuente":"Ministerio del Interior"
+"Clasificación":""
+"Unidad":"Número de infracciones penales registradas en lo que va de año"
+"Escala":"Unidades"
+"EscalaFactorPotencia10":"0"
+"SonDatosNumericos":"True"
+;;
+;;
+"Url":"https://www.epdata.es/espana-cometido-asesinatos/e8bd15b3-f8ed-4a67-85ff-102c39d71794/espana/106"
+"Titulo":"En España se han cometido 232 asesinatos hasta el trimestre 3 de 2020"
+"Subtitulo":""

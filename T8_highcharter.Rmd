@@ -1,0 +1,650 @@
+---
+title: "La librería Highcharter"
+author: "Leandro Tortosa Grau"
+output:
+  pdf_document:
+    df_print: kable
+    latex_engine: xelatex
+    fig_caption: yes
+    number_sections: yes
+    toc: yes
+    toc_depth: 3
+  html_document:
+    fig_caption: yes
+    number_sections: yes
+    theme: yeti
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+  word_document:
+    toc: yes
+    toc_depth: '3'
+always_allow_html: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, fig.align = 'center')
+library(highcharter)
+library(lubridate)
+library(dplyr)
+```
+
+# HTML Widgets
+
+El marco *htmlwidgets* proporciona enlaces R de alto nivel para bibliotecas de visualización de datos de JavaScript.
+
+Algunas bibliotecas disponibles dentro de este marco son:
+
+-   **Leaflet**, a library for creating dynamic maps that support panning and zooming, with various annotations like markers, polygons, and popups.
+
+-   **dygraphs**, which provides rich facilities for charting time-series data and includes support for many interactive features including series/point highlighting, zooming, and panning.
+
+-   **Plotly**, which via it's ggplotly interface allows you to easily translate your ggplot2 graphics to an interactive web-based version.
+
+-   **rbokeh**, an interface to Bokeh, a powerful declarative Bokeh framework for creating web-based plots.
+
+-   **Highcharter**, a rich R interface to the popular Highcharts JavaScript graphics library.
+
+-   **visNetwork**, an interface to the network visualization capabilities of the vis.js library.
+
+There are over 30 packages on CRAN which provide htmlwidgets. You can find example uses of several of the more popular htmlwidgets in the htmlwidgets [showcase](http://www.htmlwidgets.org/showcase_leaflet.html) and browse all available widgets in the gallery.
+
+# La librería **Highcharter**
+
+## Breve introducción
+
+**Highcharter** es una biblioteca de gráficos javascript muy flexible y personalizable y tiene una API excelente y poderosa. **Highcharter** depende de *Highcharts*, una biblioteca comercial de gráficos de JavaScript. *Highcharts* ofrece tanto una licencia comercial como una licencia no comercial gratuita. Revise las opciones y los términos de la licencia antes de usar este software, ya que la licencia de **Highcharter** no proporciona ni implica una licencia para *Highcharts*.
+
+[Highcharts](https://highcharts.com) es un producto de Highsoft que no es gratuito para uso comercial y gubernamental.
+
+Graficamos datos, pero los datos pueden proceder de diferentes fuentes y disponerse de diferentes maneras: vectores numéricos o de caracteres, como objetos de series de tiempo, etc. aunque el objeto más común con datos es una table de datos. Entonces, mostraremos primero y como cuestión básica cómo graficar este tipo de objeto en **highcharter**.
+
+Highcharter tiene dos funciones principales para crear un gráfico a partir de datos y otra para agregar datos a un objeto `Highchart` existente.
+
+-   `hchart()`: Constituye una función genérica que toma un objeto (vector, series temporales, data frames, ...) y devuelve un objeto (un gráfico) `highchart`.
+
+-   `hc_add_series()`: Constituye una función genérica que añade datos a un objeto `highchart` existente dependiendo del tipo d elos datos.
+
+Además de estas dos funciones genéricas, tenemos una función que será muy útil para representar gráficamente los datos y que definirá la estética del gráfico, al igual que ocurría en la librería *ggplot*. Dicha función es `hcaes()`.
+
+-   `hcaes()` define la estética de la gráfica. Funciona de forma similar a la función `aes()` en *ggplot2*.
+
+En general, la estructura que vamos a utilizar para definir un gráfico a partir de un conjunto de datos es
+
+``` yaml
+hchart(<data.frame>, <type_of_chart>, hcaes(<aesthetics>), ...)
+```
+
+donde
+
+-   `<data.frame>` será la tabla de datos.
+
+-   `<type_of_chart>` especifica el tipo de gráfico.
+
+-   `<aesthetics>` define la estética del gráfico.
+
+La librería nos permite representar datos en un conjunto muy amplio de tipos de gráficos. Entre los más comunes, podemos citar
+
+`type: "area"`, `type: "bar"`, `type: "boxplot"`, `type: "bubble"`, `type: "column"`, `type: "heatmap"`, `type: "histogram"`, `type: "line"`, `type: "networkgraph"`, `type: "pie"`, `type: "scatter"`, `type: "scatter3d"`, `type: "timeline"`, `type: "treemap"`, `type: "vector"`.
+
+La librería incluye una serie de tablas de datos para poder hacer ejemplos con las distintas funciones y opciomes. Algunos de estos conjuntos de datos son los siguientes:
+
+-   `mountains_panorama`: una tabla de 91 montañas con las variables lugar, nombre y altura.
+
+-   `citytemp`: temperaturas de ciudades.
+
+-   `favorite_bars`: Data from How I met Your Mother: Marshall's Favorite Bars.
+
+-   `globaltemp`: información de la temperatura por años.
+
+-   `unemployment`: datos sobre parados en USA, por condados.
+
+-   `vaccines`: El número de personas infectadas por sarampión, medido durante 70 años y en los 50 estados.
+
+-   `weather`: datos sobre el tiempo en San Francisco.
+
+### Temas
+
+En la librería *ggplot2* disponíamos de un conjunto de temas que podíamos utilizar para personalizar la apariencia del gráfico. De forma análoga, esta librería dispone de un conjunto de funciones que definen estéticas particulares para los gráficos. La función que añade temas a un objeto highchart es `hc_add_theme()`. Los temas concretos que podemos utilizar son:
+
+`hc_theme_merge()`, `hc_theme_538()`, `hc_theme_sparkline_vb()`, `hc_theme_tufte2()`, `hc_theme_alone()`, `hc_theme_bloom()`, `hc_theme_chalk()`, `hc_theme_darkunica()`, `hc_theme_db()`, `hc_theme_economist()`, `hc_theme_elementary()`, `hc_theme_ffx()`, `hc_theme_flat()`, `hc_theme_flatdark()`, `hc_theme_ft()`, `hc_theme_ggplot2()`, `hc_theme_google()`, `hc_theme_gridlight()`, `hc_theme_handdrawn()`, `hc_theme_hcrt()`, `hc_theme_monokai()`, `hc_theme_null()`,`hc_theme_sandsignika()`, `hc_theme_smpl()`,`hc_theme_sparkline()`, `hc_theme_superheroes()`,`hc_theme_tufte()`.
+
+La función `highcharts_demo()` nos ofrece una demostarción de los diferentes temas.
+
+### Poner un título general a un gráfico con `highcharter`.
+
+Podemos ponerle un título general al gráfico mediante la función `hc_title()` (escribiremos `hc_title()` en el código R) con las siguientes opciones:
+
+``` yaml
+hc_title(
+  align =  , 
+  floating = false,
+  margin = 15,
+  style = list(
+  color = " "
+  ),
+  text = "Título del gráfico",
+  useHTML = false,
+  verticalAlign = undefined,
+  widthAdjust = -44,
+  x = 0,
+  y = undefined
+)
+```
+
+donde podemos alinear a la izquierda, centro o derecha el título (`align`), establecer el margen entre el título y el área de dibujo (`margin`), establecer el estilo del color y la fuente. Por defecto, tenemos: \`{color = "#333333", fontSize = "18px" }. También podemos elegimos la alineación vertical del texto (por defecto es *undefined*).
+
+### Definición de parámetros estéticos en los ejes
+
+Podemos realizar diversas configuraciones con diferentes estéticas en los ejes coordenados. Un ejemplo de utilización de varios argumentos relacionados con la estética de los ejes sería la siguiente:
+
+``` yaml
+hc_yAxis(
+    gridLineColor = "black",
+    gridLineWidth = 10,
+    gridLineDashStyle = "shortdash",
+    lineColor = "#ccd6eb",
+    lineWidth = 1, 
+    opposite = false,
+    tickColor = "#ccd6eb",
+    tickInterval = undefined,
+    tickLength = 10,
+    title = list(
+        text = "Assists Per Game", # The actual title text
+        align = "high",            # Documentation says options are: low, middle or high
+        margin = 10,               # Number of pixels between the title and the axis line
+        style = list(
+            fontWeight = "bold",   # Bold
+            fontSize = '1.4em',    # 1.4 x tthe size of the default text
+            color = "#7cb5ec"      # Hex code for the default blue
+        )
+    )
+```
+
+donde `gridLineColor =` define el color de la línea de la grid, `gridLineWidth =` nos define la anchura de las líneas de la grid, `gridLineDashStyle =` configura el estilo de las líneas de la grid, `lineColor =` define el color de la línea del eje, mientras que `lineWidth =` mide su anchura, `tickColor =` nos permite cambiar el color de las marcas del eje (por defecto el color es #ccd6eb), `tickInterval =` nos permite cambiar el intervalo en el que se colocan las marcas (por defecto no está definido y lo calcula automáticamente en función de las unidades del eje), `tickLength =` nos determina la longitud del pixel de las marcas principales del eje. En cuanto al título del eje, lo podemos controlar con la función `title = list()`, que admite diversas opciones, como son `text =` el texto del eje, `align =` posición del título relativo al eje ("low","middle","high"), `margin =` la distancia en píxels entre el título y las etiquetas de los ejes, `style =` determina el estilo del título del eje.
+
+Algunos estilos de línea que podemos definir con la función `gridLineDashStyle =` son: "Solid" (por defecto), "Dot" (puntos), "ShortDot" (puntos más juntos), "Dash" (líneas), "ShortDash" (líneas más pequeñas), "LongDash" (líneas más largas), "DashDot" (puntos y líneas).
+
+También disponemos de una función similar para definir subtítulos al gráfico: `subtitle{}` (escribiremos en el código en R `hc_subtitle()`).
+
+## Ejemplo 1
+
+Vamos a trabajar el primer ejempplo tomando como fuente de datos la tabla **mpg** que se encuentra integrada en la librería *ggplot2* sobre datos de ciertos vehículos y características principales. Para ello hacemos,
+
+```{r}
+data("mpg",  package = "ggplot2")
+head(mpg)
+```
+
+Con una simple línea de código podemos representar algunas de estas variables.
+
+```{r}
+hchart(mpg, "point", hcaes(x = displ, y = cty, group = year))  %>%
+  hc_add_theme(hc_theme_smpl())
+```
+
+Establecemos dos grupos de vehículos dependiendo del año de lanzamiento (1999 y 2008).
+
+## Ejemplo 2
+
+Vamos a trabajar un nuevo ejemplo tomando como fuente de datos la tabla **economics_long** que se encuentra integrada en la librería *ggplot2* sobre datos económicos. Este conjunto de datos se produjo a partir de datos de series temporales económicas de EE. UU. disponibles en (<https://fred.stlouisfed.org/>). `economics` está en dos formatos: *ancho*, `economics_long` está en formato *largo*. Para ello hacemos,
+
+```{r}
+data("economics_long",  package = "ggplot2")
+head(economics_long)
+```
+
+Restringimos el tipo de variable:
+
+```{r}
+economics_long2 <- dplyr::filter(economics_long, variable %in% c("pop", "uempmed", "unemploy"))
+
+head(economics_long2)
+```
+
+Dibujamos en un gráfico las series temporales correspondientes a las tres variables: **pop**, total population, in thousands, <https://fred.stlouisfed.org/series/POP>, **uempmed**, median duration of unemployment, in weeks, <https://fred.stlouisfed.org/series/UEMPMED>, **unemploy**, number of unemployed in thousands, <https://fred.stlouisfed.org/series/UNEMPLOY>.
+
+Representamos mediante la instrucción:
+
+```{r}
+hchart(economics_long2, "line", hcaes(x = date, y = value01, group = variable)) 
+```
+
+## Ejemplo 3. Gasto en I+D+i en España.
+
+Tomamos una base de datos con la que ya hemos trabajado al hablar de series temporales. La tabla se correspopnde con el gasto en I+D+i de España desde el año 1978, a la que hemos añadido el PBI de cada año y el porcentaje de gasto en investigación frente al total del PBI.
+
+```{r}
+idi_spain <- read.csv2("datos/I+D+i_2020.csv")
+idi_spain <- transform(idi_spain, Año = as.Date(as.character(Año), "%Y"))
+idi_spain$año <- year(idi_spain$Año)
+```
+
+Podemos empezar haciendo una representación simple del gasto en I+D+i del estado español a lo largo de los años para ver su evolución. Para ello simplemente basta con definir el código
+
+```{r}
+hchart(idi_spain, "line", hcaes(x = año, y = Administración.Pública)) %>%
+  hc_add_theme(hc_theme_flat())  %>%
+   hc_title(text = "Gasto público en I+D+i")
+```
+
+Si no especificamos nada, los nombres que aparecen en los ejes X e Y son los que tienen asignadas las variables en la data table. Si queremos modificar el nombre que aparece debemos utilizar la función `hc_xAxis(title = list(text = "...."))` si nos referimos al eje X o `hc_yAxis(title = list(text = "...."))`. En consecuencia, cambiamos el título en el eje Y de la forma
+
+```{r}
+hchart(idi_spain, "line", hcaes(x = año, y = Administración.Pública)) %>%
+  hc_yAxis(title = list(text = "Gasto público en millones de euros")) %>%
+  hc_title(text = "Gasto público en I+D+i") %>%
+  hc_add_theme(hc_theme_flat())
+```
+
+Esta gráfica nos muestra los valores absolutos del gasto público a lo largo de los años. Puede ser interesante hacer una gráfica donde se muestre el procentaje de aumento o disminución del gasto en un año frente al gasto el año anterior. esto lo tenemos reflejado en la columna *Pub*. Por eso, construimos el gráfico correspondiente.
+
+```{r}
+hchart(idi_spain, "line", hcaes(x = año, y = Pub)) %>%
+  hc_yAxis(title = list(text = "% (Variación del gasto en I+D+i)")) %>%
+  hc_title(text = "Variación de gasto público en I+D+i en %") %>%
+  hc_add_theme(hc_theme_flat())
+```
+
+También podemos optar por realizar un gráfico del tipo barras para estos valores ("bar"). Vamos a introducir un título al gráfico mediante la opción `hc_title()` como en los gráficos anteriores. También modificamos el título en el eje Y. Además, guardamos el gráfico ya realizado con el nombre **hc** de manera que si queremos añadirle ciertas opciones no tenemos que repetir la construcción.
+
+```{r}
+hc <- hchart(idi_spain, "bar", hcaes(x = año, y = Administración.Pública)) %>%
+       hc_add_theme(hc_theme_google()) %>%
+       hc_yAxis(title = list(text = "Gasto público en millones de euros")) %>%
+       hc_title(text = "Gasto en I+D+i de las Administraciones Públicas",style = list(color = "red"))
+hc
+```
+
+Vamos a introducir en el gráfico simple un subtítulo, un caption y unos crétitos para ver las oportunidades que nos ofrece la librería.
+
+```{r}
+hc %>% 
+  hc_subtitle(
+    text = "Administraciones Estatales y Autonómicas"
+    ) %>% 
+  hc_caption(
+    text = "Gasto desde el año 1978 en I+D+i de las administraciones públicas españolas.", 
+    useHTML = TRUE
+    ) %>% 
+  hc_credits(
+    text = "Gráfico creado con R y highcharter",
+    href = "http://jkunst.com/highcharter",
+    enabled = TRUE
+    )
+```
+
+Ahora incluimos en un gráfico el gasto en I+D+i que realizan las administraciones públicas, las universidades y las empresas, tomando los datos de la tabla anterior.
+
+```{r}
+hc <- highchart() %>% 
+  hc_xAxis(categories = idi_spain$año) %>% 
+  hc_add_series(
+    name = "Gasto Público", data = idi_spain$Administración.Pública
+    ) %>% 
+  hc_add_series(
+    name = "Universidades", data = idi_spain$Enseñanza.Superior
+    ) %>% 
+  hc_add_series(
+    name = "Empresa", data = idi_spain$Empresas
+    ) %>%
+  hc_title(text = "Gasto en I+D+i por sectores") %>%
+  hc_add_theme(hc_theme_google())
+
+hc
+```
+
+Si queremos incluir el gasto total, podemos fácilmente construir una nueva serie sumando los anteriores.
+
+```{r}
+hc %>% hc_add_series(
+         name = "Gasto total",
+         data = (idi_spain$Administración.Pública + idi_spain$Enseñanza.Superior + idi_spain$Empresas)
+         )
+```
+
+Al gráfico anterior podemos darle un toque personalizado en la apariencia gráfica mediante la función `hchart()` aprovechando la construcción que acabamos de hacer. Así, por ejemplo, incluimos un fondo degradado que definiremos mediante la función `linearGradient()`. Podría ser, a modo de ejemplo:
+
+```{r}
+hc %>% 
+  hc_chart(
+    borderColor = 'green',
+    borderRadius = 5,
+    borderWidth = 3,
+    backgroundColor = list(
+      linearGradient = c(0, 0, 300, 300),
+      stops = list(
+        list(0, 'rgb(255, 255, 255)'),
+        list(1, 'rgb(200, 200, 255)')
+        )
+      )
+    )
+```
+
+Podemos ahora cambiar el gráfico anterior `hc` y dibujar columnas en 3D para ver el cambio.
+
+```{r}
+hc <- hc %>% 
+  hc_chart(
+    type = "column",
+    options3d = list(
+      enabled = TRUE, 
+      beta = 5,
+      alpha = 15
+      )
+    ) %>%
+  hc_add_theme(hc_theme_darkunica())
+hc
+```
+
+Hacemos algunas modificaciones sobre este gráfico. Observamos que no se ve bien la leyenda del eje X, donde no se distinguen los años. También podemos modificar el aspecto de las líneas del grid.
+
+```{r}
+hc %>%
+ hc_xAxis(
+    gridLineColor = "blue",
+    gridLineWidth = 1,
+    gridLineDashStyle = "Dot",
+    lineColor = "#ccd6eb",
+    lineWidth = 5, 
+    tickColor = "#ccd6eb",
+    tickInterval = 5,
+    title = list(
+        text = "Año", # The actual title text
+        align = "high",            # Documentation says options are: low, middle or high
+        margin = 10               # Number of pixels between the title and the axis line
+    )
+ )  %>%
+ hc_yAxis(
+    gridLineColor = "blue",
+    gridLineWidth = 1,
+    gridLineDashStyle = "Dot",
+    lineColor = "#ccd6eb",
+    lineWidth = 5, 
+    tickColor = "#ccd6eb",
+    title = list(
+        text = "Gasto en miles de millones", # The actual title text
+        align = "high",            # Documentation says options are: low, middle or high
+        margin = 10               # Number of pixels between the title and the axis lin
+    )
+)  %>%
+  hc_add_theme(hc_theme_alone())
+```
+
+Si queremos volver a definir este gráfico como líneas, debemos indicarle el nuevo tipo de líneas y debemos deshabilitar el modo 3D. Lo hacemos mediante el código
+
+```{r}
+hc <- hc_chart(hc, type = "line", options3d = list(enabled = FALSE))
+```
+
+Si recordamos cuando estudiamos los gráficos con la librería **dygraphs** para representar series temporales en función de los objetos *xts* creados previamente, aprendimos a dibujar líneas y bandas de color sobre los gráficos. Esto también podemos hacerlo en esta librería, ahora con las funciones `plotLines` para el dibujo de líneas y `plotBands` para el dibujo de bandas. Ahora vamos a crear un ejemplo asociado a los valores que vimos referentes a los gobiernos y a la crisis de 2009.
+
+```{r}
+hc2 <- hc %>%
+ hc_xAxis(
+    plotLines = list(
+      list(label = list(text = "PSOE"), color = "purple", width = 2, value = 5, zIndex = 1),
+      list(label = list(text = "PSOE"), color = "purple", width = 2, value = 26, zIndex = 1),
+      list(label = list(text = "PSOE"), color = "purple", width = 2, value = 40, zIndex = 1),
+      list(label = list(text = "PP"), color = "orange", width = 2, value = 18, zIndex = 1),
+      list(label = list(text = "PP"), color = "orange", width = 2, value = 33, zIndex = 1)
+    )
+    ) %>%
+  hc_xAxis(
+    plotBands = list(
+      list(
+        from = 30,
+        to = 36,
+        color = hex_to_rgba("yellow", 0.1),
+        label = list(text = ""),
+        zIndex = 1
+        )
+      )
+    ) %>%
+   hc_add_theme(hc_theme_bloom())
+
+hc2
+```
+
+También podemos hacer modificaciones sobre el lugar y la forma en que colocamos la leyenda. Sin embargo, una de las cosas que echamos en el gráfico anterior es que cuando nos movemos con el ratón por el mismo, podamos comparar los valores que tienes las diferentes series que componen el mismo. Eso ocurre en otras libreríaas que nos proporcionan gráficos interactivos como **plotly**, por ejemplo o la propia **dygraphs**. Esto podemos conseguirlo en **highcharter** mediante la función`hc_tooltip()`. Ponemos un ejemplo tomando el dibujo hecho anteriormente.
+
+```{r}
+hc2  %>%
+  hc_tooltip(
+    crosshairs = TRUE,
+    backgroundColor = "white",
+    shared = TRUE, 
+    borderWidth = 1
+    ) %>%
+   hc_add_theme(hc_theme_smpl())
+```
+
+Igual que representamos la variación, en porcentaje, del gasto público en I+D+i, podemos representar la variación en porcentaje de un año al siguiente en el gasto, con el fin de visualizar los aumentos y recortes en esta inversión, tanto por parte de la administración como de las empresas y las universidades.
+
+```{r}
+hc3 <- hc <- highchart() %>% 
+  hc_xAxis(categories = idi_spain$año) %>% 
+  hc_add_series(
+    name = "Gasto Público", data = idi_spain$Pub
+    ) %>% 
+  hc_add_series(
+    name = "Universidades (%)", data = idi_spain$ES
+    ) %>% 
+  hc_add_series(
+    name = "Empresa (%)", data = idi_spain$Empresa
+    ) %>%
+  hc_xAxis(
+    plotLines = list(
+      list(label = list(text = "PSOE"), color = "purple", width = 2, value = 5, zIndex = 1),
+      list(label = list(text = "PSOE"), color = "purple", width = 2, value = 26, zIndex = 1),
+      list(label = list(text = "PSOE"), color = "purple", width = 2, value = 40, zIndex = 1),
+      list(label = list(text = "PP"), color = "orange", width = 2, value = 18, zIndex = 1),
+      list(label = list(text = "PP"), color = "orange", width = 2, value = 33, zIndex = 1)
+    )
+    ) %>%
+  hc_xAxis(
+    plotBands = list(
+      list(
+        from = 30,
+        to = 36,
+        color = hex_to_rgba("yellow", 0.1),
+        label = list(text = ""),
+        zIndex = 1
+        )
+      )
+    ) %>%
+  hc_yAxis(
+   title = list(
+        text = "% variación de gasto", # The actual title text
+        align = "high",            # Documentation says options are: low, middle or high
+        margin = 10               # Number of pixels between the title and the axis lin
+    ),
+   plotLines = list(
+      list(label = list(text = ""), color = "red", width = 4, value = 0, zIndex = 1)
+    )
+  ) %>%
+  hc_tooltip(
+    crosshairs = TRUE,
+    backgroundColor = "white",
+    shared = TRUE, 
+    borderWidth = 1
+    ) %>%
+  hc_title(text = "Variación en gasto en I+D+i (%) de un año al siguiente") %>%
+  hc_add_theme(hc_theme_elementary())
+
+hc3
+```
+
+En este ejemplo vemos que hay valores positivos y negativos. Notemos que queremos resaltar la línea correspondiente al valor $Y=0$, para visualizar mejor los valores positivos y los negativos. Para eso hacemos lo siguiente:
+
+``` yaml
+hc_yAxis(
+   ...
+   plotLines = list(
+      list(label = list(text = ""), color = "purple", width = 4, value = 0, zIndex = 1)
+    )
+  )
+```
+
+Veamos otro gráfico.
+
+```{r}
+hc3 <- highchart() %>% 
+  hc_xAxis(categories = idi_spain$año) %>% 
+  hc_add_series(
+    name = "Total/PIB", data = idi_spain$relacion_PIB
+    ) %>% 
+  hc_add_series(
+    name = "Inflación", data = idi_spain$inflación
+    )  %>%
+  hc_title(text = "Relación entre Gasto en I+D+i respecto PIB y la inflación anual") %>%
+  hc_tooltip(
+    crosshairs = TRUE,
+    backgroundColor = "white",
+    shared = TRUE, 
+    borderWidth = 1
+    ) %>%
+  hc_add_theme(hc_theme_ffx())
+
+hc3
+```
+
+## Introducción a los mapas
+
+La librería **highcharter** incluye las librerías **highmaps** de **highchartsJS** para dibujar y hacer gráficos con datos en mapas.
+
+La forma más sencilla de representar un mapa con **highcharter** es mediante la función `hc_map()`. La sintaxis de esta función es la siguiente
+
+``` yaml
+hcmap(
+  map = "custom/world",
+  download_map_data = getOption("highcharter.download_map_data"),
+  data = NULL,
+  value = NULL,
+  joinBy = NULL,
+  ...
+)
+```
+
+donde los argumentos son
+
+-   `map =` cadena que indica el mapa a dibujar, que es uno de la [lista](https://code.highcharts.com/mapdata/)
+
+-   `download_map_data =` es un valor lógico para descargar el mapa. Por defecto `TRUE` vía la opción `getOption("highcharter.download_map_data")`.
+
+-   `data =` datos opcionales para representar un choropleth, en cuyo caso el uso de `value =` y `joinBy =` son necesarios.
+
+-   `value =` una cadena de valores con el nombre de la variable a visualizar.
+
+-   `joinBy =` define la propiedad que une el `map` y `df`.
+
+### Ejemplo
+
+Para ver un ejemplo de construcción y visualización de datos en un mapa utilizando la herramienta **highcharter**, vamos a extraer datos de una librería de R que se llama **datasets**. En esta librería encontramos un conjunto de tablas de datos que podemos utilizar para nuestros ejemplos de visualización y representaciones gráficas. Entre las tablas existentes, hay una que se denomina `USArrests`. En esta tabla se resumen el número y la tasa de crímenes violentos en todos los estados de USA en el año en 1973. Concretamente se recogen datos y estadísticas, en arrestos por 100.000 residentes, por agresión, asesinato y violación en cada uno de los 50 estados de EE.UU. en el año 1973. También se proporciona el porcentaje de la población que vive en áreas urbanas.
+
+Se trata de un conjunto de 50 observaciones con 4 variables:
+
+-   col 1 `Murder`: número de arrestos por asesinato (por cada 100.000 habitantes).
+
+-   col2 `Assault`: número de arrestos por asaltos (por 100.000 habitantes).
+
+-   col3 `UrbanPop`: población urbana en porcentaje.
+
+-   col 4 `Rape`: número de arrestos por violación (por 100.000 habitantes).
+
+En la tabla original existe un error para el estado de Maryland con su población en áreas urbanas, que es de 76.6, escribiendo el dato una vez importada la tabla. Evidentemente necesitamos instalar e importar la librería para utilizar los datos.
+
+```{r}
+require(dplyr)
+data("USArrests", package = "datasets")
+USArrests <- mutate(USArrests, "woe-name" = rownames(USArrests))
+
+USArrests["Maryland", "UrbanPop"] <- 76
+
+head(USArrests)
+```
+
+También hemos creado una columna con los nombres de las filas para que aparezca como una variable en la tabla el nombre de cada estado.
+
+Vamos a crear un mapa en el que reflejemos, por estado, el porcentaje de la población residente en ciudades (UrbanPop).
+
+```{r}
+options(highcharter.download_map_data = TRUE)
+hcmap(
+   map = "countries/us/us-all", data = USArrests,
+   joinBy = "woe-name", value = "UrbanPop", name = "Urban Population"
+ )
+```
+
+Hacemos lo mismo con la variable `Murder` para comprobar un mapa de densidad donde veamos el dato de asesinatos por estado (por cada 100.000 hab.).
+
+```{r}
+hcmap(
+   map = "countries/us/us-all", data = USArrests,
+   joinBy = "woe-name", value = "Murder", name = "Asesinatos/100.000 hab."
+ )
+```
+
+Si queremos utilizar los mapas disponibles en la [página](https://code.highcharts.com/mapdata/) tenemos el conjunto de mapas disponibles. Por ejemplo, para descargar el mapa de España, tendríamos que hacer
+
+```{r}
+hcmap(map = "countries/es/es-all", showInLegend = FALSE) %>%
+  hc_title(text = "Mapa de España")
+```
+
+Notemos dos novedades en el mapa anterior. La primera es que podemos optar porque aparezca o no la leyenda en el mapa que estamos diseñando. Para ello basta con añadir `showInLegend = FALSE`. La segunda novedad es la posibilidad de ponerle t´tulo al mapa de la forma normal en la librería mediante la instrucción `hc_title(text = "Mapa de España")`.
+
+Algunos otros mapas frecuentemente utilizados son:
+
+-   `map = "custom/usa-and-canada"`: mapa de EE.UU y Canadá.
+
+-   `map = "custom/world"`: mapa del mundo.
+
+-   `map = "custom/world-continents"`: mapa del mundo con el nombre de los continentes.
+
+-   `map = "custom/europe"`: mapa de Europa.
+
+-   `map = "countries/us/us-all"`: mapa de los EE.UU.
+
+-   `map = "countries/gb/gb-all"`: mapa de Gran Bretaña.
+
+Además, existen mapas de la mayoría de países del mundo, de los continentes, diversos de EE.UU, por distritos del congreso, por estados, por territorios y por división administrativa, así como mapas de las provincias de Canadá, Francia, Alemania, Países Bajos o mapas de todos los estados de EE.UU.
+
+Con esta librería también es posible añadir puntos o burbujas como datos. Para esto es necesario disponer de un data frame con dos columnas imprescindibles: `lat = c()`, `lon = c()`, es decir las coordenadas latitud y longitud de los puntos a representar. Opcionalmente, podemos defiinir una columna para establecer los nombres `name = c()` o la coordenada z (opcional).
+
+Veamos un ejemplo.
+
+```{r}
+cities <- data.frame(
+  name = c("London", "Birmingham", "Glasgow", "Liverpool"),
+  lat = c(51.507222, 52.483056, 55.858, 53.4),
+  lon = c(-0.1275, -1.893611, -4.259, -3),
+  z = c(1, 2, 3, 2)
+)
+
+hcmap("countries/gb/gb-all", showInLegend = FALSE) %>%
+  hc_add_series(
+    data = cities, 
+    type = "mappoint",
+    name = "Cities", 
+    minSize = "1%",
+    maxSize = "5%"
+    ) %>%
+  hc_mapNavigation(enabled = TRUE)
+```
+
+Debemos notar un detalle novedoso en este ejemplo. Introducimos la posibilidad de navegar por el mapa. Esto lo conseguimos mediante la instrucción:
+
+``` yaml
+hc_mapNavigation(enabled = TRUE)
+```
+
+Podemos hacer más compleja la navegación, haciendo que podamos utilizar la rueda del ratón o el doble-click para hacer Zoom. Esto lo implementamos mediante la nueva instrucción:
+
+``` yaml
+hc_mapNavigation(
+    enabled = TRUE,
+    enableMouseWheelZoom = TRUE,
+    enableDoubleClickZoom = TRUE
+  )
+```

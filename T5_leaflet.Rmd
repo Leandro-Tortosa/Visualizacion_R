@@ -1,0 +1,1102 @@
+---
+title: "Mapas con la librería leaflet"
+author: "Leandro Tortosa Grau"
+output:
+  html_document:
+    fig_caption: yes
+    number_sections: yes
+    theme: yeti
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+  pdf_document:
+    df_print: kable
+    latex_engine: xelatex
+    fig_caption: yes
+    number_sections: yes
+    toc: yes
+    toc_depth: 3
+  word_document:
+    toc: yes
+    toc_depth: '3'
+always_allow_html: yes
+editor_options: 
+  markdown: 
+    wrap: sentence
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, fig.align = 'center')
+library(leaflet)
+library(leaflet.providers)
+library(maps)
+library(htmltools)
+library(plotly)
+library(htmlwidgets)
+library(webshot)
+library(RColorBrewer)
+library(rgdal)
+library(ggplot2)
+library(sf)
+library(googleway)
+library(ggrepel)
+library(ggspatial)
+library(rgeos)
+library(dbplyr)
+library(dplyr)
+library(maps)
+library(plyr)
+library(lubridate)
+library(coronavirus)
+```
+
+# Primeros pasos con leaflet
+
+Los mapas estáticos son útiles para crear figuras para informes y presentaciones.
+A veces, sin embargo, deseamos interactuar con sus datos.
+Podemos utilizar el paquete **leaflet** de R para superponer sus datos sobre mapas interactivos.
+Puedes pensar en ello como mapas de Google con sus datos superpuestos en la parte superior.
+
+**Leaflet** es una librería de *JavaScript* de código abierto que se puede utilizar para crear mapas interactivos compatibles con dispositivos móviles.
+Una vez instalada, se puede usar este paquete en la consola R, dentro de los documentos *RMarkdown* y dentro de las aplicaciones *Shiny*.
+
+Se puede crear un mapa con **leaflet** con estos pasos básicos:
+
+-   Crear un mapa llamando a `leaflet()`.
+
+-   Agregar capas (características) al mapa utilizando funciones de capa (por ejemplo, `addTiles`, `addMarkers`, `addPolygons`).
+
+-   Repetir el paso 2 como se desee.
+
+-   Imprimir el mapa para mostrarlo.
+
+Aquí tenemos un ejemplo básico, donde se muestra dónde se encuentra la biblioteca de la Universidad de Alicante, lugar del aula del Máster en Ciencia de Datos.
+
+```{r}
+library(leaflet)
+m <- leaflet() %>%
+  addTiles() %>%  # Add default OpenStreetMap map tiles
+  addMarkers(lng=-0.511828, lat=38.383279, popup="Aula del Máster de Ciencia de Datos")
+m  # Print the map
+```
+
+En la primera línea indicamos que utilice la librería **leaflet**, después hemos creado un objeto `m`, mediante el operador habitua `leaflet`.
+Con la función `addTiles()` estamos incorporando un mapa de *Tiles*, siendo OpenStreetMap el que utiliza por defecto.
+A continuación añadimos un marcador al mapa con`addMarkers()`, pasando como parámetros las coordenadas geográficas de un punto (lng y lat) y creamos un popup con el texto "Aula del Máster de Ciencia de Datos".
+Por último, solo nos queda mostrar el mapa por pantalla el objeto creado `m`.
+
+*RStudio* nos permite exportar el mapa que hemos creado.
+En el menú de visualización del mapa, *RStudio* dispone de la opción `Export`.
+La primera vez que la utilicemos nos indicará que necesita descargar nuevos paquetes.
+Seleccionamos `Save as Web Page` y nos crea un archivo *html* con todo lo necesario para ver el mapa.
+
+Podemos manipular los atributos del widget de mapa utilizando una serie de métodos.
+Consulte la página de ayuda `?SetView` para obtener más detalles.
+
+-   `setView()` establece el centro de la vista del mapa y el nivel de zoom;
+
+-   `fitBounds()` ajusta la vista en el rectángulo [lng1, lat1] - [lng2, lat2];
+
+-   `clearBounds()` borra el límite, por lo que la vista se determinará automáticamente por el rango de datos de latitud/longitud en las capas del mapa, si se proporcionan.
+
+**El objeto de datos**
+
+Tanto `leaflet()` como las funciones de la capa de mapa tienen un parámetro de datos opcional que está diseñado para recibir datos espaciales en una de varias formas:
+
+-   Desde la base R:
+
+    -   matriz lng / lat.
+
+    -   marco de datos con columnas lng/lat.
+
+-   Desde el paquete `sp`:
+
+    -   SpatialPoints [DataFrame].
+
+    -   Línea / Líneas.
+
+    -   SpatialLines [DataFrame].
+
+    -   Polígono / polígonos.
+
+    -   SpatialPolygons [DataFrame].
+
+\*Desde el paquete de mapas:
+
+-   el marco de datos devuelto por `map()`
+
+El argumento de datos se utiliza para derivar datos espaciales para funciones que lo necesitan; por ejemplo, si los datos son un objeto *SpatialPolygonsDataFrame*, entonces llamar a `addPolygons` en ese widget de mapa sabrá agregar los polígonos de ese SpatialPolygonsDataFrame.
+
+Es sencillo derivar estas variables de objetos *sp*, ya que siempre representan datos espaciales de la misma manera.
+Por otro lado, para una matriz o marco de datos normal, cualquier columna numérica podría contener datos espaciales.
+Entonces recurrimos a adivinar en función de los nombres de las columnas:
+
+-   la variable de latitud se adivina buscando columnas denominadas lat o latitud (no distingue entre mayúsculas y minúsculas).
+
+-   la variable de longitud se adivina buscando lng, long o longitude.
+
+-   Siempre puede identificar explícitamente las columnas de *latitud/longitud* proporcionando argumentos *lng* y *lat* a la función de capa.
+
+# Los mapas base de leaflet
+
+**Leaflet** admite mapas base que utilizan mosaicos de mapas, popularizados por Google Maps y ahora utilizados por casi todos los mapas web interactivos.
+
+> La forma más sencilla de añadir capas es mediante `addTiles()` sin argumentos; por defecto, se utilizan los de OSM.
+> Alternativamente, se pueden agregar muchos mapas base gratuitos populares de terceros mediante la función `addProviderTiles()`, que se implementa mediante el complemento de proveedores leaflet-providers plugin.
+> ôdmeos consultar [aquí](http://leaflet-extras.github.io/leaflet-providers/preview/index.html) el conjunto completo.
+
+Los proveedores de leaflet (*leaflet.providers*) proporcionan capas de mapas de diferentes proveedores, incluidos OpenStreetMap, Stamen, Esri y OpenWeatherMap.
+Se puede obtener una vista previa de la lista completa de capas de uso gratuito.
+Esta página le mostrará el nombre para usar con leaflet-Suppliers.js y el código para usarlo sin dependencias.
+
+Para su comodidad, `Leaflet` también proporciona una lista con nombre de todos los proveedores de mapas de terceros que son compatibles con el complemento.
+Esto le permite utilizar la función de autocompletar de su R IDE favorito (como RStudio) y no tener que recordar ni buscar proveedores de mosaicos compatibles; simplemente escriba `providers$` y elija una de las opciones.
+También puede escribir `names(providers)` para ver todas las opciones.
+
+Existen proveedores de mapas que requieren un registro previo.
+Veamos alguno de ellos.
+
+**Mapbox**
+
+In order to use Mapbox maps, you must register.
+You can get map_ID (e.g. "mapbox/satellite-v9") and ACCESS_TOKEN from Mapbox projects:
+
+``` yaml
+L.tileLayer.provider('MapBox', {
+    id: '<insert map_ID here>',
+    accessToken: '<insert ACCESS_TOKEN here>'
+}).addTo(map);
+```
+
+The currently-valid Mapbox map styles, to use for map_IDs, are listed in the Mapbox documentation - only the final part of each is required, e.g. "mapbox/light-v10".
+
+**Esri/ArcGIS**
+
+In order to use ArcGIS maps, you must register and abide by the terms of service.
+No special syntax is required.
+
+[Available Esri layers](http://leaflet-extras.github.io/leaflet-providers/preview/index.html)
+
+**Stadia Maps**
+
+In order to use Stadia maps, you must register.
+Once registered, you can whitelist your domain within your account settings.
+
+**HERE** and **HEREv3** (formerly Nokia).
+
+In order to use HEREv3 layers, you must register.
+Once registered, you can create an apiKey which you have to pass to L.tileLayer.provider in the options:
+
+``` yaml
+L.tileLayer.provider('HEREv3.terrainDay', {
+    apiKey: '<insert apiKey here>'
+}).addTo(map);
+```
+
+You can still pass app_id and app_code in legacy projects:
+
+``` yaml
+L.tileLayer.provider('HERE.terrainDay', {
+    app_id: '<insert ID here>',
+    app_code: '<insert ID here>'
+}).addTo(map);
+```
+
+**Jawg Maps**
+
+In order to use Jawg Maps, you must register.
+Once registered, your access token will be located here and you will access to all Jawg default maps (variants) and your own customized maps :
+
+``` yaml
+L.tileLayer.provider('Jawg.Streets', {
+    variant: '<insert map id here or blank for default variant>',
+    accessToken: '<insert access token here>'
+}).addTo(map);
+```
+
+**Thunderforest**
+
+In order to use Thunderforest maps, you must register.
+Once registered, you have an api_key which you have to pass to L.tileLayer.provider in the options:
+
+``` yaml
+L.tileLayer.provider('Thunderforest.Landscape', {apikey: '<insert api_key here>'}).addTo(map);
+```
+
+**MapTiler Cloud**
+
+In order to use MapTiler maps, you must register.
+Once registered, get your API key from Account-\>Keys, which you have to pass to L.tileLayer.provider in the options:
+
+``` yaml
+L.tileLayer.provider('MapTiler.Streets', {
+    key: '<insert key here>'
+}).addTo(map);
+```
+
+Vemos con el mismo ejemplo anterior un mapa distinto al que mostramos por defecto, basado en OpenstreetMaps.
+La función que introducimos es `addProviderTiles()`.
+
+```{r}
+library(leaflet)
+m <- leaflet() %>%
+  addTiles() %>%  # Add default OpenStreetMap map tiles
+  addMarkers(lng=-0.511828, lat=38.383279, popup="Aula del Máster de Ciencia de Datos") %>%
+  addProviderTiles(providers$CartoDB.Positron)
+m
+```
+
+Uno de los problemas que más pueden fastidiar al crear un mapa de leaflet es que al hacer *zoom-out* se pueden llegar a ver "varios" planetas Tierra, lo cual no tiene mucho sentido.
+Esto se puede arreglar definiendo límites al hacer *zoom-out* y *zoom-in*.
+Se pueden cambiar las opciones de la función leaflet.
+Un ejemplo es el siguiente:
+
+```{r}
+m <- leaflet(options = leafletOptions(minZoom = 11, maxZoom = 16)) %>%
+  addTiles() %>%
+  addMarkers(lng=-0.511828, lat=38.383279, popup="Aula del Máster de Ciencia de Datos") %>%
+  addProviderTiles(providers$CartoDB.DarkMatter)
+m
+```
+
+Para dejar el mapa en un zoom fijo y no permitir *zoom-out* ni *zoom-in*, se pueden fijar `minZoom` y `maxZoom` al mismo nivel.
+
+No está restringido a usar un solo mapa base en un mapa; puede apilarlos agregando múltiples capas de mosaicos.
+En general, esto solo tiene sentido si los mosaicos frontales consisten en mosaicos semitransparentes o tienen una opacidad ajustada a través del argumento de opciones.
+
+```{r}
+m %>% addProviderTiles(providers$MtbMap) %>%
+  addProviderTiles(providers$CartoDB.PositronNoLabels,
+    options = providerTileOptions(opacity = 0.15)) %>%
+  addProviderTiles(providers$Esri.WorldStreetMap)
+```
+
+```{r eval=FALSE, include=FALSE}
+names(providers)
+```
+
+# Diversas características de los mapas con leaflet
+
+## Los marcadores
+
+Utilizamos marcadores (`markers`) para señalar puntos en el mapa.
+Las ubicaciones de los marcadores se expresan en coordenadas de latitud/longitud y pueden aparecer como iconos o como círculos.
+
+-   Fuentes de datos
+
+Los datos de puntos para marcadores pueden provenir de una variedad de fuentes:
+
+-   Objetos `SpatialPoints` o `SpatialPointsDataFrame` (del paquete `sp`).
+
+-   `POINT`, `sfc_POINT` y objetos **sf** (del paquete **`sf`**); solo se considerarán las dimensiones X e Y.
+
+-   Matrices numéricas de dos columnas (la primera columna es la longitud, la segunda es la latitud).
+
+-   Marco de datos con columnas de latitud y logitud.
+    Puede indicar explícitamente a la función de marcador qué columnas contienen los datos de coordenadas (por ejemplo, `addMarkers(lng = ~Longitude, lat = ~Latitude))`, o dejar que la función busque columnas denominadas`lat`/`latitude`y`lon`/`lng`/`long`/`longitude\` (case insensible).
+
+-   Simplemente proporcione vectores numéricos como argumentos *lng* y *lat*.
+
+Los marcadores de iconos se agregan usando las funciones `addMarkers()` o `addAwesomeMarkers()`.
+Su apariencia predeterminada es un pin.
+Al igual que con la mayoría de las funciones de las capas, el argumento emergente se puede usar para agregar un mensaje que se mostrará al hacer clic, y la opción de etiqueta se puede usar para mostrar una etiqueta de texto al pasar el mouse o estáticamente.
+
+Los marcadores de círculo `addCircleMarkers()` son muy parecidos a los círculos regulares, excepto que su radio en píxeles en pantalla permanece constante independientemente del nivel de zoom.
+
+## Popups (ventanas emergentes)
+
+Las ventanas emergentes (popups) son pequeños cuadros que contienen HTML arbitrario, que apuntan a un punto específico en el mapa.
+
+Utilice la función `addPopups()` para agregar una ventana emergente independiente al mapa.
+
+Un uso común de las ventanas emergentes es que aparezcan cuando se hace clic en marcadores o formas.
+Las funciones de marcador y forma en el paquete `Leaflet` toman un argumento emergente, donde puede pasar HTML para adjuntar fácilmente una ventana emergente simple.
+Veamos un ejemplo.
+
+```{r}
+library(htmltools)
+
+df <- read.csv(textConnection(
+"Name,Lat,Long
+Samurai Noodle,47.597131,-122.327298
+Kukai Ramen,47.6154,-122.327157
+Tsukushinbo,47.59987,-122.326726"
+))
+
+leaflet(df) %>% addTiles() %>%
+  addMarkers(~Long, ~Lat, popup = ~htmlEscape(Name)) %>%
+  addProviderTiles(providers$CartoDB.DarkMatterOnlyLabels)
+```
+
+Una etiqueta (label) es un contenido textual o HTML que se puede adjuntar a marcadores y formas para que siempre se muestre o se muestre al pasar el ratón.
+A diferencia de las ventanas emergentes, no es necesario hacer clic en un marcador/polígono para que se muestre la etiqueta.
+
+Simplemente cambiamos la instrucción `addMarkers(~Long, ~Lat, popup = ~htmlEscape(Name))` por `addMarkers(~Long, ~Lat, label = ~htmlEscape(Name))`.
+
+## Polígonos, círculos y rectángulos
+
+Datos en forma de líneas y polígonos pueden venir de una variedad de fuentes:
+
+-   `SpatialPolygons`, `SpatialPolygonsDataFrame`, `Polygons`, y `Polygon` objetos (de la librería **sp**).
+
+-   `SpatialLines`, `SpatialLinesDataFrame`, `Lines`, y `Line` objetos (de la librería **sp**).
+
+-   `MULTIPOLYGON`, `POLYGON`, `MULTILINESTRING`, y `LINESTRING` objetos (de la librería **sp**)).
+
+-   `map` objetos (mediante la función `map()`); utilizamos `map(fill = TRUE)` para polígonos, FALSE para polylines.
+
+-   Matrices numéricas de dos culumnas; la primera es la longitud y la segunda la latitud.
+
+**Circles**
+
+Para dibujar círculos como marcas se usa `addCircles()`.
+Los círculos son similares a los marcadores de círculos; la única diferencia es que los círculos tienen sus radios especificados en metros, mientras que los marcadores de círculos se especifican en píxeles.
+Como resultado, los círculos se escalan con el mapa a medida que el usuario acerca y aleja el zoom, mientras que los marcadores de círculos mantienen un tamaño constante en la pantalla independientemente del nivel de zoom.
+
+Al trazar círculos, solo se requieren los centros (y los radios) de los círculos, por lo que el conjunto de fuentes de datos válidas es diferente al de los polígonos y el mismo que al de los marcadores.
+Consulte la introducción a Marcadores para obtener detalles específicos.
+
+Vemos un ejemplo:
+
+```{r}
+cities <- read.csv(textConnection("
+City,Lat,Long,Pop
+Boston,42.3601,-71.0589,645966
+Hartford,41.7627,-72.6743,125017
+New York City,40.7127,-74.0059,8406000
+Philadelphia,39.9500,-75.1667,1553000
+Pittsburgh,40.4397,-79.9764,305841
+Providence,41.8236,-71.4222,177994
+"))
+
+leaflet(cities) %>% addTiles() %>%
+  addCircles(lng = ~Long, lat = ~Lat, weight = 10, color = "red",
+    radius = 500, label = ~City) %>%
+  addProviderTiles(providers$CartoDB)
+```
+
+Podemos hacer que las marcas tengan un tamaño proporcional a la población de la ciudad e introducir una escala de colores también en función de la población.
+
+```{r}
+cities <- read.csv(textConnection("
+City,Lat,Long,Pop
+Boston,42.3601,-71.0589,645966
+Hartford,41.7627,-72.6743,125017
+New York City,40.7127,-74.0059,8406000
+Philadelphia,39.9500,-75.1667,1553000
+Pittsburgh,40.4397,-79.9764,305841
+Providence,41.8236,-71.4222,177994
+"))
+pal <- colorNumeric(
+  palette = "inferno",
+  domain = cities$Pop)
+
+leaflet(cities) %>% addTiles() %>%
+  addCircles(lng = ~Long, lat = ~Lat, weight = 1, color = ~pal(Pop),
+    radius = ~sqrt(Pop) * 30, label = ~City) %>%
+  addProviderTiles(providers$CartoDB)
+```
+
+## Colores
+
+Una parte importante de la visualización espacial es asignar colores a las variables.
+
+tenemos un gran número de funciones relacionadas con la asignación de color a las variables: `colorNumeric`, `colorBin`, y `colorQuantile`, `colorFactor`.
+
+**Parámetros comunes**
+
+Las funciones de color requieren dos argumentos como mínimo: `palette` y `domain`.
+
+El argumento `palette` especifica la gama de colores.
+Puede tener diversas opciones:
+
+-   El nombre de una paleta existente en la librería `RColorBrewer`, como por ejemplo "RdYlBu", "Accent", or "Greens".
+    En esta [página](https://www.r-graph-gallery.com/38-rcolorbrewers-palettes.html) podemos ver el conjunto de paletas disponibles en esta librería.
+
+-   El nombre de una paleta viridis: "viridis", "magma", "inferno", o "plasma".
+
+-   Un vector RGB o los nombres de los colores como por ejemplo `palette( )`, c("#000000", "#0000FF", "#FFFFFF"), topo.colors(10).
+
+-   Una función que recibe un valor entre 0 y 1 y devuelve un color, como por ejemplo `colorRamp(c("#000000", "#FFFFFF"), interpolate="spline")`.
+
+El argumento `domain` le dice a la función de color el rango de valores de entrada.
+Puede pasar NULL aquí para crear una función de paleta que no tenga un rango preestablecido; el rango se inferirá de los datos cada vez que invoque la función de paleta.
+Si usa una función de paleta varias veces en diferentes datos, es importante proporcionar un valor no NULL para el dominio para que la escala entre los datos y los colores sea consistente.
+
+**Colores continuos (`colorNumeric`)**
+
+Comenzamos asignado valores GDP directamente a la paleta "Blues" de `ColorBrewer 2`.
+Utilizamos la función `colorNumeric` para crear una función de asignación.
+La paleta "Blues" solo contiene 9 colores, aunque `colorNumeric` interpola estos colores para conseguir una paleta continua.
+
+``` yaml
+# Create a continuous palette function
+pal <- colorNumeric(
+  palette = "Blues",
+  domain = countries$gdp_md_est)
+```
+
+## Leyendas
+
+El paquete **Leaflet** incluye funciones para crear leyendas de colores.
+
+```{r}
+df <- read.csv("https://raw.githubusercontent.com/plotly/datasets/master/2014_world_gdp_with_codes.csv")
+colnames(df)[colnames(df) == "GDP..BILLIONS."] <- 'gdp'
+colnames(df)[colnames(df) == "COUNTRY"] <- 'country'
+head(df)
+```
+
+Ahora vamos a representar los datos del PBI a nivel mundial utilizando **leaflet**.
+Tenemos la tabla con las geolocalizaciones de los países.
+
+```{r}
+countries_coor <- read.csv("datos/countries_coor.xls")
+colnames(countries_coor)[colnames(countries_coor) == "country"] <- 'country_ID'
+colnames(countries_coor)[colnames(countries_coor) == "name"] <- 'country'
+head(countries_coor)
+```
+
+Ahora mezclamos las tablas *countries_coor* y *df*, que es donde se encuentran los datos del PBI.
+
+```{r}
+tabla <- merge(countries_coor, df, by = "country")
+head(tabla)
+```
+
+Ahora ya podemos hacer una representación geográfica.
+Representamos con círculos el PBI de cada país, siendo el tamaño del círculo una función directa de su valor.
+También utilizamos una paleta de colores llamada "viridis".
+
+```{r}
+pal3 <- colorNumeric(
+  palette = colorRamp(c("blue", "red"), interpolate="spline"),
+  domain = tabla$gdp)
+pal2 <- colorNumeric(
+  palette = "viridis",
+  domain = tabla$gdp)
+
+leaflet(tabla) %>% addTiles() %>%
+  addCircles(lng = ~longitude, lat = ~latitude, weight = 1,  color = ~pal3(gdp),
+             radius = ~gdp * 100, fillOpacity = 0.5, label = paste("País:", tabla$country, "<br>", "PBI $ (billions):", tabla$gdp))  %>% 
+  addProviderTiles(providers$CartoDB.Voyager) %>%
+  addLegend(pal = pal3, values = ~gdp, opacity = 0.5)
+```
+
+## Gráficos más complejos con **leaflet**
+
+Podemos representar diversas variables en el mismo mapa, simplemente añadiendo las correspondientes capas.
+Lo vamos a analizar con más detenimiento en los siguientes ejemplos.
+
+Para ello descargamos la librería **gapminder**, que nos ofrece una tabla, llamada `gapminder`, donde aparecen los datos referentes a los países, el continente, el año (desde el 1952 hasta el 2007, en intervalos de cinco años), la esperanza de vida, la población y el PBI per cápita (GDP).
+Nos decargamos dicha tabla para realizar un tratamiento básico de los datos y llevar a cabo algunas representaciones.
+
+Lo primero es añadir al conjunto de países sus coordenadas geográficas de longitud y latitud correspondientes.
+Podemos hacer lo mismo que en caso anterior.
+Ahora mezclamos las tablas *countries_coor* y *gapminder*, que es donde se encuentran los datos del PBI.
+
+```{r}
+library(gapminder)
+data(gapminder)
+tabla1 <- merge(countries_coor, gapminder, by = "country")
+head(tabla1)
+```
+
+Ahora nos quedamos con los datos mundiales referentes al año 2007, que es el más reciente que aparece en la lista.
+Para ello, seleccionamos los datos que tienen ese valor en la columna *year*.
+
+```{r}
+tabla1_2007 <- filter(tabla1, tabla1$year == 2007)
+head(tabla1_2007)
+```
+
+Ahora vamos a hacer algunas representaciones gráficas.
+Primero respecto la esperanza de vida.
+
+```{r}
+#Paletas de colores
+pal1 <- colorNumeric(
+  palette = colorRamp(c("blue", "red"), interpolate="spline"),
+  domain = tabla1_2007$lifeExp)
+
+map <- leaflet(tabla1_2007) %>%  addTiles() %>%
+  addProviderTiles(providers$CartoDB.DarkMatter) %>%
+  addCircles(lng = ~longitude, lat = ~latitude, weight = 1,  color = ~pal1(lifeExp),
+             radius = ~lifeExp * 2500, fillOpacity = 0.8, popup = paste("País:", tabla1_2007$country, "<br>", "Esperanza vida:", tabla1_2007$lifeExp)) %>%
+ addLegend(pal = pal1, values = ~lifeExp, opacity = 1)
+map
+```
+
+Ahora representamos la población.
+
+```{r}
+#Paletas de colores
+pal1 <- colorNumeric(
+  palette = colorRamp(c("blue", "red"), interpolate="spline"),
+  domain = tabla1_2007$lifeExp)
+pal2 <- colorNumeric(
+  palette = colorRamp(c("blue", "red"), interpolate="spline"),
+  domain = tabla1_2007$pop)
+pal3 <- colorNumeric(
+  palette = colorRamp(c("blue", "red"), interpolate="spline"),
+  domain = tabla1_2007$gdpPercap)
+
+map <- leaflet(tabla1_2007) %>%  addTiles() %>%
+  addProviderTiles(providers$CartoDB.DarkMatter) %>%
+  addCircles(lng = ~longitude, lat = ~latitude, weight = 1,  color = ~pal2(pop),
+             radius = ~pop /1300, fillOpacity = 0.9, popup = paste("País:", tabla1_2007$country, "<br>", "Población (2007):", tabla1_2007$pop)) %>%
+ addLegend(pal = pal2, values = ~pop, opacity = 1)
+map
+```
+
+Ahora representamos el PBI per cápita.
+
+```{r}
+#Paletas de colores
+pal1 <- colorNumeric(
+  palette = colorRamp(c("blue", "red"), interpolate="spline"),
+  domain = tabla1_2007$lifeExp)
+pal2 <- colorNumeric(
+  palette = colorRamp(c("blue", "red"), interpolate="spline"),
+  domain = tabla1_2007$pop)
+pal3 <- colorNumeric(
+  palette = colorRamp(c("blue", "red"), interpolate="spline"),
+  domain = tabla1_2007$gdpPercap)
+
+map <- leaflet(tabla1_2007) %>%  addTiles() %>%
+  addProviderTiles(providers$CartoDB.DarkMatter) %>%
+  addCircles(lng = ~longitude, lat = ~latitude, weight = 1,  color = ~pal3(gdpPercap),
+             radius = ~gdpPercap * 5, fillOpacity = 0.8, popup = paste("País:", tabla1_2007$country, "<br>", "PBI per cápita $:", tabla1_2007$gdpPercap)) %>%
+ addLegend(pal = pal3, values = ~gdpPercap, opacity = 1)
+map
+```
+
+Podemos también efectuar una represenatción gráfica conjunta utilizando distintas capas.
+
+```{r}
+#Paletas de colores
+pal1 <- colorNumeric(
+  palette = colorRamp(c("blue", "red"), interpolate="spline"),
+  domain = tabla1_2007$lifeExp)
+pal2 <- colorNumeric(
+  palette = colorRamp(c("purple", "orange"), interpolate="spline"),
+  domain = tabla1_2007$pop)
+pal3 <- colorNumeric(
+  palette = colorRamp(c("black", "brown"), interpolate="spline"),
+  domain = tabla1_2007$gdpPercap)
+
+map <- leaflet(tabla1_2007) %>%
+  # Base groups
+  addTiles(group = "Generic") %>%
+  addProviderTiles(providers$Stamen.TonerBackground, group = "Day") %>%
+  addProviderTiles(providers$CartoDB.DarkMatter, group = "Night") %>%
+  # Overlay groups
+  addCircles(lng = ~longitude, lat = ~latitude, weight = 1,  color = ~pal1(lifeExp), radius = ~lifeExp *1800,                    fillOpacity = 0.5, popup = ~as.character(country), group = "Esperanza Vida") %>%
+  addCircles(lng = ~longitude, lat = ~latitude, weight = 1,  color = ~pal2(pop), radius = ~pop / 1000,                           fillOpacity = 0.5, popup = ~as.character(country), group = "Población") %>%
+  addCircles(lng = ~longitude, lat = ~latitude, weight = 1,  color = ~pal3(gdpPercap), radius = ~gdpPercap *5,                   fillOpacity = 0.5, popup = ~as.character(country), group = "PBI per Cápita") %>%
+  
+  
+  # Layers control
+  addLayersControl(
+    baseGroups = c("Generic", "Day", "Night"),
+    overlayGroups = c("Esperanza Vida", "Población", "PBI per Cápita"),
+    options = layersControlOptions(collapsed = FALSE)
+  )
+map
+```
+
+## Representación gráfica de tweets.
+
+A continuación, mostramos uuna visualización relacionada con los tweets que se han producido en la ciudad de Roma durante un período de tiempo.
+Lo primero que debemos hacer es importar los datos.
+
+```{r}
+tweets_roma <- read.csv("datos/tweets_roma.csv")
+head(tweets_roma)
+```
+
+En esta tabla disponemos de los datos sobre los tweets puestos desde Roma referentes a la fecha y hora, su geolocalización, el ususario que lo ha puesto, el lenguaje, si ha sido retuiteado y el número de veces que lo ha sido.
+Con todos estos datos, vamos a organizarlos un poco y a seleccionar los que vamos a representar puesto que la tabla contiene más de 200.000 observaciones (tweets).
+
+En primer lugar lo que hacemos es convertir a formato fecha la primera columna.
+
+```{r}
+tweets_roma$Created..UTC. <- as.Date(tweets_roma$Created..UTC.)
+```
+
+Seleccionamos algunas columnas y agrupamos por año.
+
+```{r}
+tweets <- dplyr::select(tweets_roma, Created..UTC.,Latitude,Longitude,User.Name)
+colnames(tweets) <- c("Date","latitude","longitude", "username")
+
+tweets$year <- year(tweets$Date)
+tweets$month <- month(tweets$Date)
+
+colnames(tweets) <- c("Date","latitude","longitude", "username","year","month")
+
+```
+
+Filtramos los datos referentes al año 2017
+
+```{r}
+tweets_2017 <- dplyr::filter(tweets, year == 2017)
+head(tweets_2017)
+```
+
+Ahora ordenamos por meses.
+
+```{r}
+
+tweets_2017 <- arrange(tweets_2017, month)
+
+head(tweets_2017)
+```
+
+Ahora hacemos un diagrama de barras para tener una idea del número de tweets que se han puesto por mes durante el año 2017.
+
+```{r}
+fig <- plot_ly(tweets_2017, x= ~month,  type = "histogram", color = I("orange"),
+               hovertemplate = paste('<i>Month</i>: %{x}',
+                                     '<br><b>Tweets</b>: %{y}<br>'))
+fig <- fig %>% layout(title="Number of tweets generated in Roma in 2017",
+                      xaxis=list(dtick = 1, tick0 = 2, tickmode = "linear"),
+  yaxis=list(title='tweets (miles)'),
+  bargap=0.1)
+
+fig
+```
+
+Ahora vamos a separar los tweets por meses y para ello construimos unas tablas con los meses 5, 8, 9, 10, 11 y 12, que son donde se han registrado un número mayor de tweets.
+
+```{r}
+tweets_mayo <- filter(tweets_2017, month == 5)
+tweets_agosto <- filter(tweets_2017, month == 8)
+tweets_septiembre <- filter(tweets_2017, month == 9)
+tweets_octubre <- filter(tweets_2017, month == 10)
+tweets_noviembre <- filter(tweets_2017, month == 11)
+tweets_diciembre <- filter(tweets_2017, month == 12)
+```
+
+**Mayo**
+
+Hacemos un estudio de los tweets por días.
+
+```{r}
+tweets_mayo$day <- day(tweets_mayo$Date)
+tweets_mayo <- arrange(tweets_mayo, day)
+```
+
+Representamos los tweets por día.
+
+```{r}
+fig <- plot_ly(tweets_mayo, x= ~day,  type = "histogram", color = I("moccasin"),
+               hovertemplate = paste('<i>Day</i>: %{x}',
+                                     '<br><b>Tweets</b>: %{y}<br>'))
+fig <- fig %>% layout(title="Number of tweets generated in Roma in May, 2017",
+  xaxis=list(dtick = 1, tick0 = 12, tickmode = "linear"),                    
+  yaxis=list(title='tweets'),
+  bargap=0.1)
+
+fig
+```
+
+Vamos a contar el número de tweets en Roma por día, es decir, realizamos manualmente lo que hemos hecho aplicando el gráfico estadístico *histograma*.
+Para eso, necesitamos procesar por trozos la tabla que estamos utilizando.
+Utilizaremos la librería **plyr**.
+Dentro de esta librería utilizamos una función que nos es muy útil para trabajar bloques de datos en un data frame.
+La función es **ddply()**.
+
+> **ddply()** Split Data Frame, Apply Function, And Return Results In A Data Frame.
+
+Un ejemplo sencillo de dicha función es el siguiente:
+
+```{r}
+library(plyr)
+df = data.frame(x1=c(0,1,1,1,2,3,3,3),
+               x2=c(0,1,1,3,2,3,3,2),
+               x3=c(0,1,1,1,2,3,3,2))
+
+ddply(df, .(x1, x2, x3), nrow)
+```
+
+Aplicamos esta función para determinar el número de tweets totales por día en Roma en el mes de mayo.
+
+```{r}
+library(plyr)
+
+res <- ddply(tweets_mayo, .(day), summarize, total = length(day))
+head(res,10)
+```
+
+Hacemos lo mismo para los usuarios, es decir, contamos los tweets que ha puesto cada usuario durante el mes de mayo.
+
+```{r}
+res2 <- ddply(tweets_mayo, .(username), summarize, total = length(username))
+res2 <- arrange(res2, desc(total))
+res2_50 <- filter(res2, total > 50)
+res2_50$username <- as.character(res2_50$username)
+head(res2, 10)
+```
+
+Representamos estos datos utilizando un típico diagrama de barras.
+Tomamos sólo los usuarios que han puesto más de 50 tweets.
+
+```{r}
+fig <- res2_50 %>% plot_ly()
+fig <- fig %>% add_trace(x = ~username, y = ~total, type = 'bar',
+             text = ~total, textposition = 'auto',
+             marker = list(color = 'darkgreen',
+                           line = list(color = 'rgb(8,48,107)', width = 1.5)))
+fig <- fig %>% layout(title = "Tweets by username (may, 2017)",
+         xaxis = list(title = ""),
+         yaxis = list(title = "Number of tweets"))
+
+fig
+```
+
+Observamos claramente cómo la distribución del número de tweets es muy particular ya que solamente unos pocos usuarios ponen tweetes en las redes en grandes cantidades.
+Así, por ejemplo, el usuario *Trendinalia Italia* pone casi 7000 tweets en un mes, mientras que el siguiente usuario es *Trendsmap Roma*, con casi 800 tweets.
+Precisamente son empresas que se dedican al análisis de las redes sociales, especialmente los asuntos que son **trending topics** en cada momento, por lo que su volumen de tweets al día es elevadísimo.
+Llaman también la atención los usuarios relacionados con la predicción del tiempo.
+Sin duda, el carácter turístico de la ciudad de Roma marca estas tendencias y esta distribución en los tweets.
+
+Ahora contamos los tweets que ha puesto cada usuario y por día, es decir, contamos los tweets que cada usuario ha puesto y qué días los ha puesto.
+
+```{r}
+res3 <- ddply(tweets_mayo, .(username,day), summarize, total = length(username))
+res3 <- arrange(res3, desc(total))
+head(res3,10)
+```
+
+Vamos a intentar contabilizar cuántos tweets se han puesto desde cada posición geográfica.
+queremos obtener una tabla donde aparezca la posición geográfica desde la que se han puesto tweets en el mes de mayo, cuántos se han puesto desde cada lugar y el usuario que los ha puesto.
+
+```{r}
+res4 <- ddply(tweets_mayo, .(longitude,latitude, username), summarize, total = length(latitude))
+res4 <- arrange(res4, desc(total))
+head(res4,10)
+```
+
+Ahora, en la tabla **res4** hemos conseguido reunir tres columnas: la primera me indica la longitud y la segunda la latitud; la tercera me indica el número de tweets que se realizan esde esa misma posición.
+Ahora la idea es establecer un gráfico con los tweets donde el tamaño de cada punto esté en función del numero de tweets.
+Lo hacemos con leaflet.
+
+```{r}
+#Paletas: Greens, Blues, Accent, Spectral, inferno, plasma, magma, viridis, heat, RdYlBu
+df <- res4
+pal3 <- colorNumeric(
+  palette = "PRGn",
+  domain = df$total)
+
+leaflet(df) %>% addTiles() %>%
+  addCircles(lng = ~longitude, lat = ~latitude, weight = 1,  color = ~pal3(total),
+             radius = ~sqrt(total*10), fillOpacity = 0.5, popup = paste("Usuario:", df$username, "<br>", "Tweets (mayo 2017):", df$total))  %>% 
+  addProviderTiles(providers$CartoDB.Voyager) %>%
+  addLegend(pal = pal3, values = ~total, opacity = 1)
+```
+
+## Analizando los datos de los tweets y comparando meses.
+
+Hemos analizado los datos correspondientes al mes de mayo referentes al número de tweets emitidos por cada usuario, la fecha en las que lo emite y la geolocalización del mismo.
+No hemos analizado si los datos que disponemos corresponden con todos los días del mes o, si por el contario, solo disponemos de algunos días concretos de los que se disponen datos.
+Por tanto, nos hacemos la primera pregunta:
+
+> Los tweets analizados recogidos en 2017 se corresponden con algunos meses concretos.
+> ¿Cómo es la distribución de tweets a lo largo de esos meses?
+> ¿Disponemos de datos todos los días del mes estudiado o solo de algunos días?
+> ¿Son representativos esos días para extraer conclusiones generales?
+
+Para contestar a esta pregunta resulta interesante definir una nueva tabla donde podamos determinar los tweets emitidos por mes y por día dentro del mes.
+Para hacer esto nos faltarís definir una nueva columna donde aparezca el día de la fecha concreta.
+
+```{r}
+tweets_2017$day <- day(tweets_2017$Date)
+```
+
+Ahora vamos a construir una nueva tabla donde aparezcan los tweets ordenados por mes y día, para poder estimar la distribución de tweets a lo largo del tiempo.
+
+```{r}
+tweets_2017_org <- ddply(tweets_2017, .(month,day), summarize, total = length(day))
+head(tweets_2017_org)
+```
+
+Ahora representamos gráficamente.
+
+```{r}
+fig <- tweets_2017_org %>%
+  plot_ly(
+    x = ~day, 
+    y = ~total, 
+    frame = ~month, 
+    text = ~total, 
+    hoverinfo = "text",
+    type = 'scatter',
+    mode = 'markers'
+  )
+fig <- fig %>% layout(
+  title = "Número de tweets por día y mes en 20017 en Roma",
+    xaxis = list(
+      title = "Dia"
+    ),
+    yaxis = list(
+      title = "Número de tweets"
+    )
+  )
+ fig  <-  fig %>%
+  animation_opts(1000, easing = "elastic", redraw = FALSE) %>%
+  animation_button(y = 1000, xanchor = "right", y = 0, yanchor = "bottom")  %>%
+  animation_slider(currentvalue = list(prefix = "mes: ", font = list(color="orange")))
+fig
+```
+
+Del gráfico animado anerior podemos observar que de la mayoría de los meses disponemos de datos dispersos, unos cuantos días seguidos, aunque no todo el mes completo.
+Sin embargo, se observa que tenemos dos meses, octubre y noviembre, donde disponemos de datos prácticamente casi todos los días y existen pocas fluctuaciones en el número de tweets de unos días y otros, presentando unos valores que en principio pensamos que podemos analizar como representativos.
+
+Ahora nos hacemos una cuestión que vamos a tratar de responder con los datos.
+
+> ¿Podemos observar un comportamiento y un patrón similar en los tweets contabilizados de los meses de octubre y noviembre que los patrones y características de los recogidos en el mes de mayo?
+> ¿Existe una distribución similar de los tweets durante los días de esos meses?
+> ¿Son los mismos usuarios los que más tweets ponen durante octubre y noviembre?
+
+Para reponder estas cuestiones analizamos los datos que nos ofrece la tabla *tweets_2017_org*.
+
+```{r}
+#Hacemos el mes de octubre
+#Construimos los tweets de agosto por dias
+tweets_octubre$day <- day(tweets_octubre$Date)
+tweets_octubre <- arrange(tweets_octubre, day)
+
+# Construimos la tabla con los tweets por día
+res_oc <- ddply(tweets_octubre, .(day), summarize, total = length(day))
+colnames(res_oc) <- c("day","total_oc")
+
+# Construimos tablas con los usuarios de tweets
+res2_oc <- ddply(tweets_octubre, .(username), summarize, total = length(username))
+res2_oc <- arrange(res2_oc, desc(total))
+colnames(res2_oc) <- c("username","total_oc")
+res2oc_50 <- filter(res2_oc, total_oc > 50)
+res2oc_50$username <- as.character(res2oc_50$username)
+
+# Tabla con los tweets de los usuarios por día
+res3_oc <- ddply(tweets_octubre, .(username,day), summarize, total = length(username))
+res3_oc <- arrange(res3_oc, desc(total))
+
+# Tabla de tweets de usuarios durante todo el mes por geolocalización.
+res4_oc <- ddply(tweets_octubre, .(longitude,latitude, username), summarize, total = length(latitude))
+res4_oc <- arrange(res4_oc, desc(total))
+colnames(res4_oc) <- c("longitude", "latitude", "username","total_oc")
+
+#Hacemos el mes de noviembre
+#Construimos los tweets de agosto por dias
+tweets_noviembre$day <- day(tweets_noviembre$Date)
+tweets_noviembre <- arrange(tweets_noviembre, day)
+
+# Construimos la tabla con los tweets por día
+res_no <- ddply(tweets_noviembre, .(day), summarize, total = length(day))
+colnames(res_no) <- c("day","total_no")
+
+# Construimos tablas con los usuarios de tweets
+res2_no <- ddply(tweets_noviembre, .(username), summarize, total = length(username))
+res2_no <- arrange(res2_no, desc(total))
+colnames(res2_no) <- c("username","total_no")
+res2no_50 <- filter(res2_no, total_no > 50)
+res2no_50$username <- as.character(res2no_50$username)
+
+# Tabla con los tweets de los usuarios por día
+res3_no <- ddply(tweets_noviembre, .(username,day), summarize, total = length(username))
+res3_no <- arrange(res3_no, desc(total))
+
+# Tabla de tweets de usuarios durante todo el mes por geolocalización.
+res4_no <- ddply(tweets_noviembre, .(longitude,latitude, username), summarize, total = length(latitude))
+res4_no <- arrange(res4_no, desc(total))
+colnames(res4_no) <- c("longitude", "latitude", "username","total_no")
+```
+
+Hemos construido tablas similares a las construidas para el mes de mayo, pero ahora para el mes de octubre y noviembre.
+Ahora se trata de visualizar y comparar estos resultados.
+
+En primer lugar vamos a hacer una comparativa del número total de tweets que se han emitido por día los meses de octubre y noviembre.
+Para ello, construimos una nueva tabla mezclando los datos de las tablas referentes a los meses de octubre y noviembre, que son **res_oc** y **res_no**.
+
+```{r}
+res_oc_no <- merge(res_oc, res_no, by = "day")
+head(res_oc_no)
+```
+
+Hacemos una representación gráfica.
+
+```{r}
+a <- list(
+  title = "Día",
+  autotick = FALSE,
+  ticks = "outside",
+  tick0 = 0,
+  ticklen = 5,
+  tickwidth = 2,
+  tickcolor = toRGB("green")
+)
+
+fig <- plot_ly(res_oc_no, x = ~day, y = ~total_oc, name = 'Octubre', type = 'scatter', mode = 'lines+markers') 
+fig <- fig %>% add_trace(y = ~total_no, name = 'Noviembre', mode = 'lines+markers') %>%
+  layout(
+    title = "Tweets en Octubre y Noviembre por días en Roma (2017)",
+     xaxis = a,
+     yaxis = list(title = "Número de tweets")
+    )
+
+fig
+```
+
+Ahora vamos a representar el número de tweets por usuario durante los meses de octubre y noviembre.
+También vamos a añadir los datos que tenemos de mayo, con los que ya hemos trabajado.
+Debemos construir una tabla con los datos mezclados de diversas tablas, como son **res2**, **res2_oc**, **res2_no**.
+Tenemos 6233 usuarios que pusieron algún tweet en mayo, 6077 usuarios en octubre y 6029 en noviembre.
+Notemos que el número de usuarios es parecido en los tres meses, aunque del mes de mayo disponemos de menos datos.
+La tabla que construimos refleja los usuarios que han puesto algún tweet en los tres meses analizados.
+
+```{r}
+#Mezclamos los meses de octubre y noviembre
+res2_oc_no <- merge(res2_oc, res2_no, by = "username")
+
+#Mezclamos con el mes de mayo
+res2_oc_no <- merge(res2, res2_oc_no, by = "username")
+res2_oc_no <- arrange(res2_oc_no, desc(total))
+head(res2_oc_no)
+```
+
+Según la tabla que hemos construido, tenemos 1757 usuarios que han puesto al menos un tweet durante los meses de octubre y noviembre.
+El número de usuarios que han puesto tweets en los tres meses es 811.
+Vamos a representar los 25 primeros usuarios y los tweets durante esos meses.
+
+```{r}
+res2_oc_no_25 <- res2_oc_no[1:25, ]
+fig <- plot_ly(res2_oc_no_25, x = ~username, y = ~total, name = 'Mayo', type = 'scatter', mode = 'markers') %>%
+ add_trace(y = ~total_oc, name = 'Octubre', mode = 'markers') %>%
+ add_trace(y = ~total_no, name = 'Noviembre', mode = 'markers') %>%  
+  layout(
+    title = "Usuarios de los tweets en Roma (2017)",
+     yaxis = list(title = "Número de tweets")
+    )
+
+fig
+```
+
+Observamos claramente el mismo patrón en los meses analizados.
+Existe un usuario (Trendinalia Roma) que pone miles de tweets en un mes y supera con mucho al resto.
+
+> ¿Cuántos tweets se han puesto por día durante los meses de octubre y noviembre y qué usuario los ha puesto?
+> ¿Podemos representar gráficamente estos datos?
+
+Vamos a representar estos datos.
+Para ello, necesitamos trabajar con las tablas **res3_oc** y **res3_no**.
+
+```{r}
+#Cambiamos de nombre las columnas correspondientes
+colnames(res3_oc) <- c("username_oc","day", "total_oc")
+res3_oc$username_oc <- as.character(res3_oc$username_oc)
+colnames(res3_no) <- c("username_no","day", "total_no")
+res3_no$username_no <- as.character(res3_no$username_no)
+
+```
+
+```{r}
+#Mezclamos las tablas.
+res3_oc_no <- merge(res3_oc, res3_no, by = "day")
+head(res3_oc_no)
+```
+
+La tabla que obtenemos mezclando estos datos tiene más de 7 millones de registros.
+Contabilizamos todos los tweets que se han contabilizado, por días durante estos dos meses, y por usuario que lo ha emitido.
+Con el fin de simplificar un poco la visualización, ya que representar más de 7 millones de datos no tiene mucho sentido en este caso, podemos establecer un número mínimo de tweets por día de cada usuario.
+De esta forma, representamos los usuarios más activos y los días de emisión del tweet.
+
+```{r}
+res3_oc_no <- filter(res3_oc_no, total_oc > 10 & total_no > 10)
+
+```
+
+En concreto, representamos los usuarios que han emitido más de 10 tweets en un día.
+
+```{r}
+fig <- plot_ly(res3_oc_no, x = ~day, y = ~total_oc, name = 'Octubre', type = 'scatter', mode = 'markers',
+              marker = list(size = ~total_oc, sizeref = 4, sizemode = 'area'),
+              text = ~username_oc,
+              hovertemplate = paste(
+                 "<b>%{text}</b><br><br>",
+                 "<i>Tweets:</i>: %{y}<br>",
+                 "<i>Día:</i>: %{x}"
+      )) %>%
+ add_trace(y = ~total_no, name = 'Noviembre', mode = 'markers',  
+           marker = list(size = ~total_no, sizeref = 4, sizemode = 'area'),
+           color = "red",
+           text = ~username_no,
+           hovertemplate = paste(
+                 "<b>%{text}</b><br><br>",
+                 "<i>Tweets:</i>: %{y}<br>",
+                 "<i>Día:</i>: %{x}"
+      )) %>%  
+  layout(
+    title = "Tweets en Roma (oct y nov de 2017)",
+    xaxis = list(title = "Día"), 
+    yaxis = list(title = "Número de tweets")
+    )
+
+fig
+```
+
+Ahora vamos a realizar una representación geográfica de los tweets durante estos meses de octubre y noviembre.
+Sin embargo, ahora la represenatción va a ser sesgada, ya que vamos a geolocalizar los usuarios que han puesto más de 10 tweets durante el mes correspondiente.
+Buscamos la localización geográfica de los usuarios más activos en tweeter en esta ciudad.
+
+```{r}
+#Paletas: Greens, Blues, Accent, Spectral, inferno, plasma, magma, viridis, heat, RdYlBu
+df <- filter(res4_oc, res4_oc$total_oc >10)
+pal3 <- colorNumeric(
+  palette = "PRGn",
+  domain = df$total_oc)
+
+leaflet(df) %>% addTiles() %>%
+  addCircles(lng = ~longitude, lat = ~latitude, weight = 1,  color = ~pal3(total_oc),
+             radius = ~sqrt(total_oc*100), fillOpacity = 0.5, popup = paste("Usuario:", df$username, "<br>", "Tweets (oct 2017):", df$total_oc))  %>% 
+  addProviderTiles(providers$CartoDB) %>%
+  addLegend(pal = pal3, values = ~total_oc, opacity = 1)
+```
+
+```{r}
+#Paletas: Greens, Blues, Accent, Spectral, inferno, plasma, magma, viridis, heat, RdYlBu
+df <- filter(res4_no, res4_no$total_no >10)
+pal3 <- colorNumeric(
+  palette = "PRGn",
+  domain = df$total_no)
+
+leaflet(df) %>% addTiles() %>%
+  addCircles(lng = ~longitude, lat = ~latitude, weight = 1,  color = ~pal3(total_no),
+             radius = ~sqrt(total_no*100), fillOpacity = 0.5, popup = paste("Usuario:", df$username, "<br>", "Tweets (nov 2017):", df$total_no))  %>% 
+  addProviderTiles(providers$CartoDB) %>%
+  addLegend(pal = pal3, values = ~total_no, opacity = 1)
+```
+
+Observando simplemente las dos imágenes, apreciamos los patrones comunes en cuanto a la distribución de tweets en los meses estudiados.
+
+Finalmente, vamos a escribir algunas de las tablas que hemos construido en este capítulo con el fin de utilizarlas, si fuera necesario, en otros análisis de datos en capítulos posteriores.
+Por ejemplo, guardamos las tablas de octubre y noviembre que hemos ido generando:
+
+```{r}
+write.csv(res2_oc, file = "/Volumes/Work/Matematicas/UNIVERSIDAD/Master Data Science/Apuntes/6_flexdashboard/tablas/res2_oc.csv")
+write.csv(res2_no, file = "/Volumes/Work/Matematicas/UNIVERSIDAD/Master Data Science/Apuntes/6_flexdashboard/tablas/res2_no.csv")
+write.csv(res_oc, file = "/Volumes/Work/Matematicas/UNIVERSIDAD/Master Data Science/Apuntes/6_flexdashboard/tablas/res_oc.csv")
+write.csv(res_no, file = "/Volumes/Work/Matematicas/UNIVERSIDAD/Master Data Science/Apuntes/6_flexdashboard/tablas/res_no.csv")
+write.csv(res3_oc, file = "/Volumes/Work/Matematicas/UNIVERSIDAD/Master Data Science/Apuntes/6_flexdashboard/tablas/res3_oc.csv")
+write.csv(res3_no, file = "/Volumes/Work/Matematicas/UNIVERSIDAD/Master Data Science/Apuntes/6_flexdashboard/tablas/res3_no.csv")
+write.csv(res4_oc, file = "/Volumes/Work/Matematicas/UNIVERSIDAD/Master Data Science/Apuntes/6_flexdashboard/tablas/res4_oc.csv")
+write.csv(res4_no, file = "/Volumes/Work/Matematicas/UNIVERSIDAD/Master Data Science/Apuntes/6_flexdashboard/tablas/res4_no.csv")
+write.csv(res_oc_no, file = "/Volumes/Work/Matematicas/UNIVERSIDAD/Master Data Science/Apuntes/6_flexdashboard/tablas/res_oc_no.csv")
+write.csv(res2_oc_no, file = "/Volumes/Work/Matematicas/UNIVERSIDAD/Master Data Science/Apuntes/6_flexdashboard/tablas/res2_oc_no.csv")
+write.csv(res3_oc_no, file = "/Volumes/Work/Matematicas/UNIVERSIDAD/Master Data Science/Apuntes/6_flexdashboard/tablas/res3_oc_no.csv")
+write.csv(res2oc_50, file = "/Volumes/Work/Matematicas/UNIVERSIDAD/Master Data Science/Apuntes/6_flexdashboard/tablas/res2oc_50.csv")
+write.csv(res2no_50, file = "/Volumes/Work/Matematicas/UNIVERSIDAD/Master Data Science/Apuntes/6_flexdashboard/tablas/res2no_50.csv")
+```
+
+
+<div class="tocify-extend-page" data-unique="tocify-extend-page" style="height: 0;"></div>

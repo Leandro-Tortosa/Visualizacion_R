@@ -1,0 +1,112 @@
+---
+title: "Tweets en Roma en octubre y noviembre de 2017"
+output: 
+   flexdashboard::flex_dashboard:
+     source_code: embed
+     theme: lumen
+---
+
+Mapas de localización {data-icon="fa-signal"}
+===================================== 
+    
+### Tweets generados en octubre en Roma en 2017
+    
+```{r}
+library(RColorBrewer)
+library(plotly)
+library(leaflet)
+library(leaflet.providers)
+library(dplyr)
+library(flexdashboard)
+library(DT)
+library(ggplot2)
+library(ggpubr)
+library(gganimate)
+library(lubridate)
+library(htmlwidgets)
+library(crosstalk)
+```
+
+
+```{r}
+# Leemos el fichero
+res4_oc <- read.csv("datos/res4_oc.csv",header=TRUE,sep=",")
+
+
+#Paletas: Greens, Blues, Accent, Spectral, inferno, plasma, magma, viridis, heat, RdYlBu
+df <- res4_oc
+#df <- filter(res4_oc, res4_oc$total_oc >10)
+pal3 <- colorNumeric(
+  palette = "viridis",
+  domain = df$total_oc)
+
+leaflet(df) %>% addTiles() %>%
+  addCircles(lng = ~longitude, lat = ~latitude, weight = 1,  color = ~pal3(total_oc),
+             radius = ~sqrt(total_oc*100), fillOpacity = 0.5, popup = paste("Usuario:", df$username, "<br>", "Tweets (oct 2017):", df$total_oc))  %>% 
+  addProviderTiles(providers$CartoDB) %>%
+  addLegend(pal = pal3, values = ~total_oc, opacity = 1)
+```
+    
+### Tweets generados en noviembre en Roma en 2017
+
+```{r}
+# Leemos el fichero
+res4_no <- read.csv("/Volumes/Work/Matematicas/UNIVERSIDAD/Master Data Science/Apuntes/6_flexdashboard/tablas/res4_no.csv",header=TRUE,sep=",")
+
+
+#Paletas: Greens, Blues, Accent, Spectral, inferno, plasma, magma, viridis, heat, RdYlBu
+df <- res4_no
+#df <- filter(res4_no, res4_no$total_no >10)
+pal3 <- colorNumeric(
+  palette = "viridis",
+  domain = df$total_no)
+
+leaflet(df) %>% addTiles() %>%
+  addCircles(lng = ~longitude, lat = ~latitude, weight = 1,  color = ~pal3(total_no),
+             radius = ~sqrt(total_no*100), fillOpacity = 0.5, popup = paste("Usuario:", df$username, "<br>", "Tweets (nov 2017):", df$total_no))  %>% 
+  addProviderTiles(providers$CartoDB) %>%
+  addLegend(pal = pal3, values = ~total_no, opacity = 1)
+```
+   
+Tabla y gráfico de tweets {data-icon="fa-table"}
+=====================================     
+
+### Tabla de los 20 nodos más centrales caso 1
+    
+```{r}
+res3_oc_no <- read.csv("/Volumes/Work/Matematicas/UNIVERSIDAD/Master Data Science/Apuntes/6_flexdashboard/tablas/res3_oc_no.csv",header=TRUE,sep=",")
+colnames(res3_oc_no) <- c("id", "Día","User oct","tweets oct","User nov","tweets nov")
+
+#Visualizamos la tabla
+knitr::kable(res3_oc_no, caption = 'Usuarios y número de tweets (por día)')
+```
+    
+### Gráfico de tweets totales en octubre y noviembre
+
+```{r}
+res_oc_no <- read.csv("/Volumes/Work/Matematicas/UNIVERSIDAD/Master Data Science/Apuntes/6_flexdashboard/tablas/res_oc_no.csv",header=TRUE,sep=",")
+a <- list(
+  title = "Día",
+  autotick = FALSE,
+  ticks = "outside",
+  tick0 = 0,
+  ticklen = 5,
+  tickwidth = 2,
+  tickcolor = toRGB("green")
+)
+
+fig <- plot_ly(res_oc_no, x = ~day, y = ~total_oc, name = 'Octubre', type = 'scatter', mode = 'lines+markers') 
+fig <- fig %>% add_trace(y = ~total_no, name = 'Noviembre', mode = 'lines+markers') %>%
+  layout(
+    title = "Tweets en Octubre y Noviembre por días en Roma (2017)",
+     xaxis = a,
+     yaxis = list(title = "Número de tweets")
+    )
+
+fig
+
+```
+
+
+
+

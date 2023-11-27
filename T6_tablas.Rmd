@@ -1,0 +1,645 @@
+---
+title: "Presentación de tablas"
+author: "Leandro Tortosa Grau"
+output:
+  html_document:
+    df_print: paged
+    theme: yeti
+    toc: yes
+    toc_depth: 3
+  pdf_document:
+    df_print: kable
+    latex_engine: xelatex
+    fig_caption: yes
+    number_sections: yes
+    toc: yes
+    toc_depth: 3
+  prettydoc::html_pretty:
+    fig_caption: yes
+    highlight: null
+    math: katex
+    number_sections: yes
+    theme: architect
+    toc: yes
+    toc_depth: 3
+always_allow_html: yes
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include=FALSE, warning = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(plotly)
+library(plyr)
+library(reactable)
+library(sparkline)
+```
+
+# Tablas en R
+
+Una estructura rectangular, en renglones y columnas, es común y
+conveniente para el análisis de datos. Nos referiremos a esta forma de
+organizar datos como **tabla**.
+
+R cuenta con la función genérica `read.table()`, que puede leer
+cualquier tipo de archivo que contenga una tabla.
+
+La condición para que R interprete un archivo como una tabla es que
+tenga renglones y en cada renglon, los datos estén separados por comas,
+o algún otro caracter, indicando columnas.
+
+La función `read.table()` acepta un número considerable de argumentos.
+Los más importantes son los siguientes.
+
+-   `file`: La ruta del archivo que importaremos, como cadena de texto.
+    Si el archivo se encuentra en nuestro directorio de trabajo, es
+    suficientedar el nombre del archivo, sin la ruta completa.
+
+-   `header`: Si nuestro archivo tiene encabezados, para ser
+    interpretados como nombres de columna, definimos este argumento como
+    TRUE. sep: El caracter que es usado como separador de columnas. Por
+    defecto es ";".
+
+-   `col.names`: Un vector opcional, de tipo caracter, con los nombres
+    de las columnas en la tabla.
+
+-   `stringsAsFactors`: Esta función convierte automáticamente los datos
+    de texto a factores. Si este no es el comportamiento que deseamos,
+    definimos este argumento como FALSE.
+
+Un caso particular de las tablas, son los archivos separados por comas,
+con extensión *.csv*, por *Comma Separated Values*, sus siglas en
+inglés. Este es un tipo de archivo comunmente usado para compartir
+datos, pues es compatible con una amplia variedad de sistemas diferentes
+además de que ocupa relativamente poco espacio de almacenamiento.
+
+La función `read.csv()` acepta los mismos argumentos que `read.table()`,
+pero al usarla con un archivo *.csv*, en casi todo los casos, no hara
+falta especificar nada salvo la ruta del archivo.
+
+Un paso muy importante en el trabajo con R es exportar los datos que
+hemos generado, ya sea para que sean usados por otras personas o para
+almacenar información en nuestro disco duro en lugar de nuestra RAM.
+
+De manera análoga a `read.table()`, la función `write.table()` nos
+permite exportar matrices o data frames, como archivos de texto con
+distintas extensiones.
+
+Los argumentos más usados de `write.table()` son los siguientes.
+
+-   `x`: El nombre del data frame o matriz a exportar.
+
+-   `file`: El nombre, extensión y ruta del archivo creado con esta
+    función. Si sólo escribimos el nombre del archivo, este será creado
+    en nuestro directorio de tabajo.
+
+-   `sep`: El caracter que se usará como separador de columnas.
+
+-   `row.names`: Si deseamos incluir el nombre de los renglones en
+    nuestro objeto al exportarlo, establecemos este argumento como TRUE.
+    En general, es recomendable fijarlo como FALSE, para conservar una
+    estructura tabular más fácil de leer.
+
+-   `col.names`: Si deseamos que el archivo incluya los nombres de las
+    columnas en nuestro objeto, establecemos este argumento como TRUE.
+    Es recomendable fijarlo como TRUE para evitar la necesidad de
+    almacenar los nombres de columna en documentos distintos.
+
+Puedes consultar todos los argumentos de esta función ejecutando
+`?write.table`.
+
+En R existen muchas librerías que se especializan en la creación de
+información en forma de tablas, algunas de las más conocidas son:
+[kableExtra](http://haozhu233.github.io/kableExtra/),
+[huxtable](https://hughjonesd.github.io/huxtable/),
+[pander](http://rapporter.github.io/pander/),
+[xtable](https://cran.r-project.org/web/packages/xtable/index.html),
+[gt](https://gt.rstudio.com), y otras. Sin embargo, vamos a tratar de
+explicar otra librería que nos va a permitir representar datos de forma
+interactiva en tablas. Dicha librería es **reactable** que podemos
+consultar en <https://glin.github.io/reactable/index.html>.
+
+# Tablas con **reactable**
+
+Antes de comenzar con el estudio de la librería **reactable** para
+construir tablas en documentos **RMarkdown**, importamos una tabla que
+nos va a acompañar el resto del capítulo y que nos va aservir para hacer
+todos los ejemplos que vayamos estudiando. Dicha tabla está relacionada
+con datos de 75 artistas de jazz a lo largo de la Historia,
+especialmente en sus orígenes. La importamos mediante la instrucción
+
+```{r}
+Jazz_data <- read.csv("datos/Jazz_data.csv", sep=";")
+Jazz <- select(Jazz_data, ARTISTA, ID,nacimiento, instrumento, Lugar, lat, lon, D1, singles)
+head(Jazz)
+```
+
+Dicha tabla consta de los siguientes datos de los 75 artistas
+analizados. El nombre, identificador, fecha de nacimiento, instrumento,
+lugar de nacimiento, geolocalización del lugar de nacimiento,
+discografía y centralidad. Eliminamos ciertos valores que no nos
+interesan de la tabla para una mejor visualización.
+
+## La librería reactable
+
+Comenzamos el estudio de las opciones que la librería nos ofrece. Lo
+primero será instalar el paquete en R, mediante la instrucción
+
+```{r, warning = FALSE}
+# install.packages("devtools")
+#devtools::install_github("glin/reactable")
+```
+
+Para crear una simple tabla utilizamos la función `reactable()`.
+
+Sin embargo, podemos insertar una tabla en un documento **R Markdown**
+de la siguiente forma:
+
+```{r}
+reactable(Jazz)
+```
+
+Obtenemos una representación sencilla de la tabla sin ninguna opción,
+únicamente la ordenación por columnas. La primera columna nos muestra el
+nombre del artista, la siguiente su identifcador, el año de nacimiento,
+el instrumento principal por el que los conocemos, el lugar de
+nacimiento, las coordenadas geográficas del lugar de nacimiento, su
+discografía (D1) y el numero de singles que lanzaron a lo largo de su
+carrera.
+
+Podemos cambiar el nombre de alguna o todas las columnas mediante la
+función `colDef()`.
+
+```{r}
+reactable(Jazz[1:10, ], columns = list(
+  nacimiento = colDef(align = "center"),
+  instrumento = colDef(align = "center"),
+  D1 = colDef(name = "discos")
+))
+```
+
+También hemos aprovechado para centrar alguna columna. Las opciones que
+nos ofrece la función `colDef()` son extraordinarias.
+
+``` yaml
+colDef(
+  name = NULL,
+  aggregate = NULL,
+  sortable = NULL,
+  resizable = NULL,
+  filterable = NULL,
+  show = TRUE,
+  defaultSortOrder = NULL,
+  sortNALast = FALSE,
+  format = NULL,
+  cell = NULL,
+  aggregated = NULL,
+  header = NULL,
+  footer = NULL,
+  details = NULL,
+  html = FALSE,
+  na = "",
+  minWidth = NULL,
+  maxWidth = NULL,
+  width = NULL,
+  align = NULL,
+  class = NULL,
+  style = NULL,
+  headerClass = NULL,
+  headerStyle = NULL,
+  footerClass = NULL,
+  footerStyle = NULL
+)
+```
+
+donde los argumentos son los siguientes:
+
+`name`: Column header name.
+
+`aggregate`:\
+Aggregate function to use when rows are grouped. The name of a built-in
+aggregate function or a custom JS() aggregate function. Built-in
+aggregate functions are: "mean", "sum", "max", "min", "median", "count",
+"unique", and "frequency". To enable row grouping, use the groupBy
+argument in reactable().
+
+`sortable`: Enable sorting? Overrides the table option.
+
+`resizable`:\
+Enable column resizing? Overrides the table option.
+
+`filterable`:\
+Enable column filtering? Overrides the table option.
+
+`show`: Show the column? Defaults to TRUE.
+
+`defaultSortOrder`: Default sort order. Either "asc" for ascending order
+or "desc" for descending order. Overrides the table option.
+
+`sortNALast`:\
+Always sort missing values (NA or NaN) last?
+
+`format`:\
+Column formatting options. A colFormat() object to format all cells, or
+a named list of colFormat() objects to format standard cells ("cell")
+and aggregated cells ("aggregated") separately.
+
+`cell`: Custom cell renderer. An R function that takes the cell value,
+row index, and column name as arguments, or a JS() function that takes a
+cell info object as an argument.
+
+`aggregated`:\
+Custom aggregated cell renderer. A JS() function that takes a cell info
+object as an argument.
+
+`header`:\
+Custom header renderer. An R function that takes the header value and
+column name as arguments, or a JS() function that takes a column info
+object as an argument.
+
+`footer`:\
+Footer content or render function. Render functions can be an R function
+that takes two arguments, the column values and column name, or a JS()
+function that takes a column info object as an argument.
+
+`details`:\
+Additional content to display when expanding a row. An R function that
+takes a row index argument or a JS() function that takes a row info
+object as an argument. Cannot be used on a grouping column.
+
+`html`: Render content as HTML? Raw HTML strings are escaped by default.
+
+`na`:\
+String to display for missing values (i.e. NA or NaN). By default,
+missing values are displayed as blank cells.
+
+`minWidth`: Minimum width of the column in pixels. Defaults to 100.
+
+`maxWidth`: Maximum width of the column in pixels.
+
+`width`:\
+Fixed width of the column in pixels. Overrides minWidth and maxWidth.
+
+`align`:\
+Column alignment. One of "left", "right", "center".
+
+`class`:\
+Additional CSS classes to apply to cells. Can also be an R function that
+takes the cell value, row index, and column name as arguments, or a JS()
+function that takes a row info object, column info object, and table
+state object as arguments. Note that R functions cannot apply classes to
+aggregated cells.
+
+`style`:\
+Inline styles to apply to cells. A named list or character string. Can
+also be an R function that takes the cell value and row index as
+arguments, or a JS() function that takes a row info object, column info
+object, and table state object as arguments. Note that R functions
+cannot apply styles to aggregated cells. If style is a named list,
+property names should be camelCased.
+
+`headerClass`:\
+Additional CSS classes to apply to the header.
+
+`headerStyle`:\
+Inline styles to apply to the header. A named list or character string.
+Note that if headerStyle is a named list, property names should be
+camelCased.
+
+`footerClass`:\
+Additional CSS classes to apply to the footer.
+
+`footerStyle`:\
+Inline styles to apply to the footer. A named list or character string.
+Note that if footerStyle is a named list, property names should be
+camelCased.
+
+Posteriormente, analizaremos otras funciones necesarias para agrupar
+valores, etc.
+
+**Clasificación**
+
+Las tablas se pueden ordenar de forma predeterminada. Puede ordenar en
+una columna haciendo clic en su encabezado u ordenar en varias columnas
+manteniendo presionada la tecla Mayús mientras ordena.
+
+Orden de clasificación predeterminado
+
+Las tablas se ordenan primero en orden ascendente de forma
+predeterminada. Para personalizar el orden de clasificación, establezca
+`defaultSortOrder` en una tabla o columna en "asc" (ascendente) o "desc"
+(descendente).
+
+**Filtrado**
+
+Puede hacer que las columnas se puedan filtrar usando `filterable`.
+Vamos a ver un ejemplo con la tabla con la que estamos trabajando.
+
+```{r}
+data <- Jazz[ , c("ARTISTA", "nacimiento", "instrumento", "Lugar", "D1")]
+
+reactable(data, filterable = TRUE, minRows = 10)
+```
+
+Como vemos ahora, la tabla nos permite filtrar por las columnas que
+deseamos y obtener resultados parciales.
+
+Para que columnas específicas se puedan filtrar (o no), establezca
+filtrables en la definición de columna. Así, si quisiéramos que la
+columna de discos no se le puedan aplicar filtros, haríamos
+
+``` yaml
+reactable(Jazz, filterable = TRUE, columns = list(
+  D1 = colDef(filterable = FALSE)
+))
+```
+
+**Búsqueda** Podemos hacer que exista la posibilidad de hacer búsquedas
+en toda la tabla globalmente mediante la instrucción `searchable`:
+
+```{r}
+data <- Jazz[ , c("ARTISTA", "nacimiento", "instrumento", "Lugar", "D1")]
+
+reactable(data, searchable = TRUE, minRows = 10)
+```
+
+**Paginación**
+
+Podemos alterar la paginación de la tabla mediante la función
+`defaultPageSize =`.
+
+También puede establecer las filas mínimas por página utilizando
+`minRows =`. Esto puede resultar útil cuando las filas no llenan
+completamente la página.
+
+Para ver más información sobre saltos de página, tamaños de página
+opcionales y otras características de la paginación, véase
+<https://glin.github.io/reactable/articles/examples.html>.
+
+**Agrupación y agregación**
+
+Podemos agrupar filas en una tabla mediante la instrucción `groupBy`.
+
+```{r}
+data <- Jazz[ , c("ARTISTA", "nacimiento", "instrumento", "Lugar", "D1")]
+
+reactable(data, groupBy = "Lugar")
+```
+
+Cuando las filas están agrupadas, puede agregar datos en una columna
+usando una función `aggregate`. Vamos a introducir una columna con los
+discos donde en cada grupo tenemos el máximo de discos por grupo.
+
+```{r}
+data <- Jazz[ , c("ARTISTA", "nacimiento", "instrumento", "Lugar", "D1", "singles")]
+
+reactable(data, groupBy = "instrumento", list(
+  D1 = colDef(aggregate = "max")
+))
+```
+
+Podemos utilizar una de las funciones agregadas integradas:
+
+``` yaml
+colDef (aggregate = "sum") # Suma de números
+colDef (aggregate = "mean") # Media de números
+colDef (aggregate = "max") # Máximo de números
+colDef (aggregate = "min") # Mínimo de números
+colDef (aggregate = "median") # Mediana de números
+colDef (aggregate = "count") # Conteo de valores
+colDef (aggregate = "unique") # Lista de valores únicos separados por comas
+colDef (aggregate = "frecuencia") # Recuentos de valores únicos separados por comas
+```
+
+**Formateo de columnas**
+
+Puede formatear los datos en una columna proporcionando opciones de
+`colFormat()` para formatear. Veamos un ejemplo.
+
+```{r}
+data <- data.frame(
+  price_USD = c(123456.56, 132, 5650.12),
+  price_INR = c(350, 23208.552, 1773156.4),
+  number_FR = c(123456.56, 132, 5650.12),
+  temp = c(22, NA, 31),
+  percent = c(0.9525556, 0.5, 0.112),
+  date = as.Date(c("2019-01-02", "2019-03-15", "2019-09-22"))
+)
+
+reactable(data, columns = list(
+  price_USD = colDef(format = colFormat(prefix = "$", separators = TRUE, digits = 2)),
+  price_INR = colDef(format = colFormat(currency = "INR", separators = TRUE, locales = "hi-IN")),
+  number_FR = colDef(format = colFormat(locales = "fr-FR")),
+  temp = colDef(format = colFormat(suffix = " °C")),
+  percent = colDef(format = colFormat(percent = TRUE, digits = 1)),
+  date = colDef(format = colFormat(date = TRUE, locales = "en-GB"))
+))
+```
+
+De forma predeterminada, los números, las fechas, las horas y las
+monedas se formatean en la configuración regional del navegador. Esto
+significa que los usuarios pueden ver resultados diferentes, según las
+preferencias de idioma de su navegador.
+
+Para usar una configuración regional específica para el formato de
+datos, proporcione un vector de etiquetas de idioma BCP 47 en el
+argumento de configuraciones regionales. Consulte
+[aquí](https://docs.microsoft.com/en-us/openspecs/office_standards/ms-oe376/6c085406-a698-4e12-9d4d-c3b0ee3dbc4a)
+para obtener una lista de las etiquetas de idioma BCP 47 comunes.
+
+Vemos otro ejemplo con formatos de fechas.
+
+```{r}
+datetimes <- as.POSIXct(c("2019-01-02 3:22:15", "2019-03-15 09:15:55", "2019-09-22 14:20:00"))
+data <- data.frame(
+  datetime = datetimes,
+  date = datetimes,
+  time = datetimes,
+  time_24h = datetimes,
+  datetime_pt_BR = datetimes
+)
+
+reactable(data, columns = list(
+  datetime = colDef(format = colFormat(datetime = TRUE)),
+  date = colDef(format = colFormat(date = TRUE)),
+  time = colDef(format = colFormat(time = TRUE)),
+  time_24h = colDef(format = colFormat(time = TRUE, hour12 = FALSE)),
+  datetime_pt_BR = colDef(format = colFormat(datetime = TRUE, locales = "pt-BR"))
+))
+```
+
+**Pies de página**
+
+Podemos añadir una fila a modo de pié de página mediante la función
+`footer()`. Ponemos un ejemplo. En este ejemplo ponemos un pie de tabla
+creando un Html widget donde creamos un diagrama de caja para los datos
+que son numéricos.
+
+```{r}
+library(sparkline)
+
+data <- Jazz[ , c("ARTISTA", "nacimiento", "instrumento", "Lugar", "D1", "singles")]
+reactable(
+  data,
+  searchable = TRUE,
+  defaultPageSize = 10,
+  bordered = TRUE,
+  defaultColDef = colDef(footer = function(values) {
+    if (!is.numeric(values)) return()
+    sparkline(values, type = "box", width = 100, height = 30)
+  })
+)
+```
+
+**Estilo condicional**
+
+Puede aplicar un estilo condicional a una tabla mediante funciones que
+devuelvan estilos en línea o clases CSS. Al igual que con la
+representación personalizada, las funciones de estilo pueden estar en R
+o JavaScript.
+
+Consulte
+[Estilo](https://glin.github.io/reactable/articles/conditional-styling.html)
+para obtener detalles sobre cómo usar las funciones de estilo, y el
+Libro de "recetas" de demostración para obtener aún más ejemplos de
+estilo condicional.
+
+*Ejemplo*: Podemos usar las utilidades de color integradas de R para
+aplicar una escala de color a una columna:
+
+```{r}
+data <- Jazz[ , c("ARTISTA", "nacimiento", "instrumento", "Lugar", "D1")]
+pal1 <- function(x) rgb(colorRamp(c("green", "yellow"))(x), maxColorValue = 255)
+
+reactable(data, 
+          columns = list(
+            D1 = colDef(name = "Discos",
+              style = function(value) {
+                normalized <- (value - min(data$D1)) / (max(data$D1) - min(data$D1))
+                color <- pal1(normalized)
+                list(background = color)
+              }
+          )
+        )
+      )
+```
+
+La función `style` presenta tres argumentos:
+
+``` yaml
+colDef(
+  style = function(value, index, name) {
+    # input:
+    #   - value, the cell value
+    #   - index, the row index (optional)
+    #   - name, the column name (optional)
+    #
+    # output:
+    #   - a named list with camelCased property names
+    list(color = "red", marginLeft = "30px")
+    #   - or an inline style string
+    else "color: red; margin-left: 30px;"
+  })
+```
+
+Veamos otro ejemplo de estilo por filas.
+
+```{r}
+reactable(data, columns = list(
+ D1 = colDef(name = "Discos",
+  style = function(value) {
+    if (value > 200) {
+      color <- "red"
+    } else if (value < 200) {
+      color <- "orange"
+    } 
+    list(color = color, fontWeight = "bold")
+  })
+))
+```
+
+También podemos señalizar las filas. Por ejemplo, los que tocan el
+piano.
+
+```{r}
+reactable(data, 
+  rowStyle = function(index) {
+    if (data[index, "instrumento"] == "piano") {
+      list(background = "rgba(0, 0, 0, 0.1)")
+    }
+  },
+  rowClass = function(index) {
+    if (data[index, "instrumento"] == "piano") {
+       "bold"
+    }
+  }
+)
+```
+
+**Estilo de tabla**
+
+Tenemos diversas opciones para que la tabla general nos aparezca con
+bordes, líneas en las casillas, bordes generales, etc. Tenemos un
+ejemplo:
+
+```{r}
+reactable(data[1:10, ], bordered = TRUE, striped = TRUE, highlight = TRUE)
+```
+
+**Tema general de tabla**
+
+Los temas proporcionan una forma poderosa de personalizar el estilo de
+la tabla que se puede reutilizar en todas las tablas. Puede establecer
+variables de tema para cambiar los estilos predeterminados (por ejemplo,
+el color de la franja de fila) o agregar su propio CSS personalizado a
+elementos específicos de la tabla.
+
+Para aplicar un tema, proporcioneos argumentos a la función
+`reactableTheme()` en el tema. Por ejemplo,
+
+```{r}
+reactable(
+  data,
+  searchable = TRUE,
+  striped = TRUE,
+  highlight = TRUE,
+  borderless = TRUE,
+  theme = reactableTheme(
+    stripedColor = "beige",
+    highlightColor = "#f0f5f9",
+    cellPadding = "8px 12px",
+    style = list(fontFamily = "-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif"),
+    searchInputStyle = list(width = "100%")
+  )
+)
+```
+
+Podemos aplicar también un tema oscuro.
+
+```{r}
+options(reactable.theme = reactableTheme(
+  color = "hsl(233, 9%, 87%)",
+  backgroundColor = "hsl(233, 9%, 19%)",
+  borderColor = "hsl(233, 9%, 22%)",
+  stripedColor = "hsl(233, 12%, 22%)",
+  highlightColor = "hsl(233, 12%, 24%)",
+  inputStyle = list(backgroundColor = "hsl(233, 9%, 25%)"),
+  selectStyle = list(backgroundColor = "hsl(233, 9%, 25%)"),
+  pageButtonHoverStyle = list(backgroundColor = "hsl(233, 9%, 25%)"),
+  pageButtonActiveStyle = list(backgroundColor = "hsl(233, 9%, 28%)")
+))
+
+reactable(
+  data,
+  filterable = TRUE,
+  showPageSizeOptions = TRUE,
+  striped = TRUE,
+  highlight = TRUE,
+  details = function(index) paste("Details for row", index)
+)
+```
+
+Vemos que con la función `details` tenemos la opción de poner un
+comentario a las filas.

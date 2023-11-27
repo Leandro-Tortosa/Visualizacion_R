@@ -1,0 +1,160 @@
+---
+title: "Tweets Roma 2017"
+output: 
+   flexdashboard::flex_dashboard:
+     source_code: embed
+     theme: lumen
+---
+
+```{r}
+library(flexdashboard)
+library(DT)
+library(leaflet)
+library(leaflet.providers)
+library(plotly)
+library(dplyr)
+library(ggplot2)
+library(ggpubr)
+library(gganimate)
+library(lubridate)
+library(htmlwidgets)
+library(crosstalk)
+
+# Leemos el fichero
+res4_oc <- read.csv("datos/res4_oc.csv",header=TRUE,sep=",")
+res_oc_no <- read.csv("datos/res_oc_no.csv",header=TRUE,sep=",")
+```
+
+Octubre
+=====================================  
+    
+Column {data-width=600}
+-------------------------------------
+    
+### Mapa de geolocalización de los tweets
+
+
+```{r}
+
+#Paletas: Greens, Blues, Accent, Spectral, inferno, plasma, magma, viridis, heat, RdYlBu
+df <- res4_oc
+pal3 <- colorNumeric(
+  palette = "inferno",
+  domain = df$total_oc)
+
+leaflet(df) %>% addTiles() %>%
+  addCircles(lng = ~longitude, lat = ~latitude, weight = 1,  color = ~pal3(total_oc),
+             radius = ~sqrt(total_oc*100), fillOpacity = 0.5, popup = paste("Usuario:", df$username, "<br>", "Tweets (oct 2017):", df$total_oc))  %>% 
+  addProviderTiles(providers$CartoDB) %>%
+  addLegend(pal = pal3, values = ~total_oc, opacity = 1)
+```
+   
+Column {data-width=400}
+-------------------------------------
+   
+### Número de tweets por día en octubre
+
+```{r}
+res_oc <- read.csv("/Volumes/Work/Matematicas/UNIVERSIDAD/Master Data Science/Apuntes/6_flexdashboard/tablas/res_oc.csv",header=TRUE,sep=",")
+a <- list(
+  title = "Día",
+  autotick = FALSE,
+  ticks = "outside",
+  tick0 = 0,
+  ticklen = 5,
+  tickwidth = 2,
+  tickcolor = toRGB("green")
+)
+
+fig <- plot_ly(res_oc, x = ~day, y = ~total_oc, name = 'Octubre', type = 'scatter', mode = 'lines+markers')  %>%
+  layout(
+    title = "Número de tweets en Octubre",
+     xaxis = a,
+     yaxis = list(title = "Número de tweets")
+    )
+
+fig
+```   
+ 
+### Usuarios de tweets con más de 50 tweets en octubre
+    
+```{r}
+res2oc_50 <- read.csv("/Volumes/Work/Matematicas/UNIVERSIDAD/Master Data Science/Apuntes/6_flexdashboard/tablas/res2oc_50.csv",header=TRUE,sep=",")
+fig <- res2oc_50 %>% plot_ly()
+fig <- fig %>% add_trace(x = ~username, y = ~total_oc, type = 'bar',
+             text = ~total_oc, textposition = 'auto',
+             marker = list(color = 'darkgreen',
+                           line = list(color = 'rgb(8,48,107)', width = 1.5)))
+fig <- fig %>% layout(title = "Usuarios con más de 50 tweets en Octubre",
+         xaxis = list(title = ""),
+         yaxis = list(title = "Número de tweets"))
+
+fig
+```
+
+Noviembre
+=====================================     
+   
+Column {data-width=600}
+-------------------------------------
+
+### Mapa de geolocalización de los tweets
+
+```{r}
+# Leemos el fichero
+res4_no <- read.csv("/Volumes/Work/Matematicas/UNIVERSIDAD/Master Data Science/Apuntes/6_flexdashboard/tablas/res4_no.csv",header=TRUE,sep=",")
+
+#Paletas: Greens, Blues, Accent, Spectral, inferno, plasma, magma, viridis, heat, RdYlBu
+df <- res4_no
+pal3 <- colorNumeric(
+  palette = "inferno",
+  domain = df$total_no)
+
+leaflet(df) %>% addTiles() %>%
+  addCircles(lng = ~longitude, lat = ~latitude, weight = 1,  color = ~pal3(total_no),
+             radius = ~sqrt(total_no*100), fillOpacity = 0.5, popup = paste("Usuario:", df$username, "<br>", "Tweets (nov 2017):", df$total_no))  %>% 
+  addProviderTiles(providers$CartoDB) %>%
+  addLegend(pal = pal3, values = ~total_no, opacity = 1)
+```
+
+Column {data-width=400}
+-------------------------------------
+   
+### Número de tweets por día en noviembre
+
+```{r}
+a <- list(
+  title = "Día",
+  autotick = FALSE,
+  ticks = "outside",
+  tick0 = 0,
+  ticklen = 5,
+  tickwidth = 2,
+  tickcolor = toRGB("green")
+)
+
+fig <- plot_ly(res_oc_no, x = ~day, y = ~total_no, name = 'Noviembre', type = 'scatter', mode = 'lines+markers') %>%
+  layout(
+    title = "",
+     xaxis = a,
+     yaxis = list(title = "Número de tweets")
+    )
+
+fig
+```   
+    
+### Usuarios de tweets con más de 50 tweets en noviembre
+
+```{r}
+res2no_50 <- read.csv("/Volumes/Work/Matematicas/UNIVERSIDAD/Master Data Science/Apuntes/6_flexdashboard/tablas/res2no_50.csv",header=TRUE,sep=",")
+fig <- res2no_50 %>% plot_ly()
+fig <- fig %>% add_trace(x = ~username, y = ~total_no, type = 'bar',
+             text = ~total_no, textposition = 'auto',
+             marker = list(color = 'darkgreen',
+                           line = list(color = 'rgb(8,48,107)', width = 1.5)))
+fig <- fig %>% layout(title = "",
+         xaxis = list(title = ""),
+         yaxis = list(title = "Número de tweets"))
+
+fig
+```

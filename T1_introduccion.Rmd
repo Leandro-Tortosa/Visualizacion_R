@@ -1,0 +1,875 @@
+---
+title: "Introducción a RMarkdown"
+author: "Leandro Tortosa"
+date: ""
+output:
+  pdf_document:
+    df_print: kable
+    latex_engine: xelatex
+    fig_caption: yes
+    number_sections: yes
+    toc: yes
+    toc_depth: 3
+  html_document:
+    fig_caption: yes
+    number_sections: yes
+    theme: yeti
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+  word_document:
+    toc: yes
+    toc_depth: '3'
+always_allow_html: yes
+editor_options: 
+  markdown: 
+    wrap: sentence
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, echo = TRUE)
+```
+
+# Introducción a R Markdown
+
+Una de las grandes ventajas de usar Rmarkdown es que permite generar informes a partir de R.
+En realidad utiliza un lenguaje llamado Markdown para enriquecer el informe final.
+Este permite incluir texto, comandos de R, imágenes y gráficos a un documento.
+Pero lo más importante es que permite que se reproduzca el análisis realizado y si se incorporan nuevos datos, los resultados se actualizarán.
+Necesitas el paquete **rmarkdown**, pero no necesitas cargarlo o instalarlo explícitamente ya que RStudio hace ambas acciones automaticamente cuando es necesario.
+
+R Mardown puede crear muchos tipos de reportes a partir de un único archivo **.Rmd**.
+Se pueden generar documentos HTML, PDF, MS_Word, ODT, RTF, md, presentaciones pptx, Beamer, slidy.js, ioslides y slideshow.js slideshows; y sitios web, paneles, libros, folletos, viñetas de paquetes, etc.
+
+Markdown es un lenguaje de marcado ligero creado por "John Gruber" en 2004, que busca conseguir la máxima legibilidad y facilidad de publicación tanto de entrada como de salida.
+Básicamente markdown un lenguaje, y a la vez una herramienta de software que convierte el lenguaje en XHTML válido.
+Véase <http://rmarkdown.rstudio.com>.
+
+Contiene tres tipos importantes de contenido:
+
+-   Un encabezado YAML (opcional) rodeado de `---`.
+
+-   Bloques de código de R rodeado de \`\`\`.
+
+-   Texto mezclado con texto simple formateado con `# Encabezado` e `_itálicas_`.
+
+**El encabezado**
+
+Este encabezado determina los parámetros generales de formato para el reporte a compilar.
+En lenguaje computacional se entiende como los metadatos del documento; esto es, información que define el formato del archivo resultante, más no su contenido.
+En el ejemplo que aquí presentamos se observan las siguientes definiciones:
+
+*Título* (`title`).
+Texto entre comillas que servirá de título general al documento.
+
+*Subtítulo* (`subtitle`).
+Texto entre comllas que servirá de subtítulo para el título general del documento.
+
+*Autor* (`author`).
+Texto entre comillas para indicar el nombre del o los autores.
+
+*Fecha* (`date`).
+Campo para indicar la fecha.
+En el texto, con la expresión today, se solicita que imprima la fecha actual según el calendario del sistema operativo.
+
+*Bibliografía* (`bibliography`).
+Se indica el nombre del archivo que contiene los datos para construir el listado de referencia bibliográficas.
+Este archivo es de formato BibTex y se construye usando un gestor de referencias como Zotero.
+
+*Formato de bibliografía* (`csl`).
+Nombre de un archivo de extensión .csl para indicar el formato de referencias en el cuerpo del texto y el listado de bibliografía al final del documento.
+La sigla refiere a Estilo del Lenguaje de Referencias (Citation Language Style) y permite definir si se usarán citas al estilo APA, ASA, Chicago, etc.
+Se adecúa a los diferentes requerimientos de referencias bibliográficas.
+
+*Color de los enlaces*.
+Mediante las opciones linkcolor y urlcolor se define el color asignado al indicador de notas al pie y a los enlaces a páginas web, respectivamente.
+En este caso se sugiere el color azul (blue).
+
+Los argumentos dentro del apartado *resultado* (`output`) son los siguientes:
+
+`pdf_document`: indica el formato preestablecido para compilar el documento.
+En este caso, se trata de un PDF.
+Puede ser html_document o word_document.
+El usuario puede escoger la modalidad que desee al compilar usando las opciones del botón knit; si se compila sin escoger ninguna opción, se compilará según el formato indicado en este encabezado.
+
+`fig_caption`: indica si las figuras deben incorporar leyendas.
+
+`latex_engine`: permite definir el motor de LaTex utilizado para compilar los documentos.
+
+`number_sections`: si está definido como yes define que se numerarán los títulos y sutítulos a lo largo del documento, de manera automática y correlativa.
+
+`toc`: es la abreviación de table of contents; si está definido como yes incorporará al inicio del documento una tabla de contenidos construida a partir de los tres primeros niveles de los títulos y subtítulos de sección utilizados.
+
+Cuando haces knit el documento (knit en español significa tejer), R Markdown envía el *.Rmd* a knitr, <http://yihui.name/knitr/>, que ejecuta todos los bloques de código y crea un nuevo documento markdown (.md) que incluye el código y su output.
+El archivo markdown generado por knitr es procesado entonces por pandoc, <http://pandoc.org/>, que es el responsable de crear el archivo terminado.
+La ventaja de este flujo de trabajo en dos pasos es que puedes crear un muy amplio rango de formatos de salida.
+
+Los encabezamientos Markdown se producen colocando un número determinado de almohadillas \# antes del texto correspondiente al nivel del encabezadoo deseado.
+
+Es posible tambien cambiar la tipología de la letra, es decir negrita, cursiva, par lo cual se utiliza el asterisco.
+Por ejemplo **R Markdown**.
+Tenemos *Cursiva*, **Negrita**, ~~Tachado~~ y a^Superíndice^.
+
+Podemos crear una tabla sencilla de la forma:
+
+| First Header | Second Header |
+|--------------|---------------|
+| Content Cell | Content Cell  |
+| Content Cell | Content Cell  |
+
+**Bloques de Código (Chunk)**
+
+Una de las ventajas de RMarkdown, es que permite integrar bloques de código.
+Los bloques de código van encerrados por tres acentos, seguidos de el nombre del lenguaje de programación, y van resaltados con un fondo gris, también pueden insertarse desde el botón insert.
+Al ejecutar un bloque de código aparece el resultado, también debajo del código que se ejecutó, o en caso de haber errores, estos también se muestran en la parte de debajo.
+
+Cuando hacel click en el botón **Knit** se genera un documento que incluye tanto el contenido como los bloques de código dentro del documento, de acuerdo a las opciones elegdas en el preámbulo.
+Por ejemplo:
+
+```{r cars}
+head(cars)
+```
+
+La salida del *chunk*(trozo de R) se puede personalizar con las opciones que aparecen en la parte superior derecha y que consisten en argumentos ya establecidos.En la Guía de referencia de R Markdown se encuentra una lista completa de las opciones de los chunk.
+Los argumentos más comunes son los siguientes:
+
+-   `include = FALSE` evita que el código y los resultados aparezcan en el archivo terminado.
+    R Markdown todavía ejecuta el código en el fragmento, y los resultados pueden ser utilizados por otros fragmentos.
+
+-   `echo = FALSE` impide el código, pero no aparecen los resultados en el archivo terminado.
+    Esta es una forma útil de incrustar figuras.
+
+-   `message = FALSE` evita que los mensajes generados por el código aparezcan en el archivo terminado.
+
+-   `warning = FALSE` evita que las advertencias generadas por el código aparezcan en el final.
+
+-   `fig.cap = “…”` agrega un título a los resultados gráficos.
+
+R Markdown por defecto permite utilizar tambien, Bash, Python, C++, SQL y Stan.
+Cada bloque de código, tiene en la parte superior derecha tres botones, el primero, es un engranaje que permite, configurar el r *chorkcut*, las alertas de error e incluso nombrarlo.
+El segundo es una flecha hacia abajo que permite ejecutar todos los bloques de código anteriores a este y por último el botón de play que permite ejecutar el bloque de código.
+
+Para configurar los valores por defecto del documento, se puede hacer uso de la función `knitr::opts_chunk$set()`, una de las maś útiles cuando se realizan informes muy largos o con códigos que tardan mucho tiempo en compilar, de modo que es conveniente guardar el caché de modo que cuando se cierre el documento, no sea necesario volver a ejecutar todos los códigos nuevamente y poder continuar donde se dejó.
+Las funciones `include` y `echo` permiten que se muestre o no, el bloque de código y el resultado respectivamente.
+
+R Markdown tiene como objetivo la presentación de informes; sin embargo, la salida de los códigos no es la más estética, por lo que R Markdown permite también generar tablas HTML, para mostrar las salidas.
+Para esto se hace uso del paquete `htmlTable`, donde se puede utilizar la instrucción `caption` para poner un título a la tabla y `tfoot` para poner un pie a la tabla.
+
+```{r warning=FALSE, include=FALSE}
+library(htmlTable)
+htmlTable(head(cars),
+          caption = "Título de la tabla",
+          tfoot = "Pie de tabla")
+```
+
+Se puede manipular el estilo de las tablas, como por ejemplo introducir colores intercalados por fila para facilitar la visualización.
+Vemos un ejemplo.
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+htmlTable(head(cars),
+          tfoot = "Este es el pie de tabla",
+          col.rgroup = c("beige", "pink"))
+```
+
+**Inclusión de formulas matemáticas**
+
+La forma de incluir fórmulas matemáticas en R Markdown se basa en la sintaxis del sistema de composición de textos cientíﬁcos LaTeX.
+Para las fórmulas o ecuaciones dentro del mismo párrafo, se escribe el código entre dos signos de dólar `$E=mc^2$`: $E= m c^2$.
+Si queremos que la fórmula se genere en una línea, escribimos la expresión entre dos símbolos de dóar `$$E=mc^2$$`: $$E = mc^2.$$
+
+**Temas**
+
+Si nos fijamos en la cabecera de este documento, hay una opción que se introduce como `theme`, que en nuestro caso hemos elegido `theme: cosmo`.
+
+Existen distintos temas que se pueden utilizar en lugar del tema predeterminado.
+Hay 12 temas adicionales que se pueden utilizar sin instalar ningún otro paquete: **cerulean**, **cosmo**, **flatly**, **journal**, **lumen**, **paper**, **legible**, **sandstone**, **simplex** , **Spacelab**, **united** y **yeti**.
+Se puede consultar la documentación de R Markdown para obtener detalles sobre cómo cambiar su tema predeterminado.
+
+El paquete *prettydoc* proporciona un motor alternativo, `html_pretty`, para construir su documento R Markdown en bonitas páginas HTML.
+Su uso es extremadamente fácil: simplemente reemplace el motor de salida `rmarkdown::html_document` o `rmarkdown::html_vignette` por `prettydoc::html_pretty` en su encabezado R Markdown, y use uno de los temas integrados y resaltadores de sintaxis.
+Actualmente, las opciones de temas implementadas en la librería `prettydoc` son: **cayman**, **tactile**, **architect**, **leonids**, **hpstr**.
+También podemos generar plantillas **prettydoc** en RStudio haciendo:
+
+``` yaml
+File --> New R Markdown --> From Template  
+```
+
+**Más información**
+
+Podemos consultar una gran cantidad de páginas web, libros, presentaciones, etc. dedicadas a aprender R Markdown.
+Se recomienda como documento básico de aprendizaje el libro [R Markdown. The definitive Guide](https://bookdown.org/yihui/rmarkdown/), que podemos consultar online de forma gratuita.
+Otras referencias son:
+
+Algunas referencias
+
+:   Allaire, JJ, Yihui Xie, Jonathan McPherson, Javier Luraschi, Kevin Ushey, Aron Atkins, Hadley Wickham, Joe Cheng, Winston Chang, and Richard Iannone.
+    2020.
+    Rmarkdown: Dynamic Documents for r.
+    <https://github.com/rstudio/rmarkdown>.
+
+    Xie, Yihui.
+    2015.
+    Dynamic Documents with R and Knitr.
+    2nd ed.
+    Boca Raton, Florida: Chapman; Hall/CRC.
+    <https://yihui.name/knitr/>.
+
+    ---------.
+    2016.
+    Bookdown: Authoring Books and Technical Documents with R Markdown.
+    Boca Raton, Florida: Chapman; Hall/CRC.
+    <https://github.com/rstudio/bookdown>.
+
+    ---------.
+    2020c.
+    Knitr: A General-Purpose Package for Dynamic Report Generation in r.
+    <https://yihui.org/knitr/>.
+
+------------------------------------------------------------------------
+
+------------------------------------------------------------------------
+
+# Breve introducción a R para Ciencia de Datos
+
+A lo largo de este curso vamos a estudiar distintas representaciones gráficas de los datos.
+Cuando hablamos de datos no nos estamos refieriendo a Big Data; el trabajo con Big Data y sus múltiples representaciones gráficas no entra en nuestros objetivos centrales.
+Trabajaremos con conjuntos de datos que se pueden manipular fácilmente en la memoria de cualquier ordenador; es lo más adecuado para comenzar porque no podemos abordar el trabajo con grandes volúmenes de datos a menos que ya se tenga una gran experiencia con los datos pequeños y se disponga de la infraestructura necesaria.
+Las herramientas que aprenderás en este curso nos permitirán manejar fácilmente decenas de megabytes de datos.
+Si trabajas habitualmente con datos más grandes (de 10 a 100 Gb, digamos), deberías obtener más información y profundizar en la instrucción `data.table`.
+
+## Una disciplina llamada Ciencia de Datos
+
+La ciencia de datos es una disciplina apasionante que le permite convertir datos sin procesar en comprensión, conocimiento y conocimiento.
+El objetivo de *R para ciencia de datos* es conocer las herramientas más importantes en R que permitan de una forma fluida trabajar o investigar en esta disciplina.
+
+Primero debe **importar** sus datos a R.
+Esto generalmente significa que toma los datos almacenados en un archivo, base de datos o interfaz de programación de aplicaciones web (API) y los carga en un marco de datos en R.
+
+Una vez que haya importado sus datos, hay que **ordenarlos y procesarlos**.
+Ordenar sus datos significa almacenarlos de una forma coherente que coincida con la semántica del conjunto de datos con la forma en que se almacenan.
+En resumen, cuando sus datos están ordenados, cada columna es una variable y cada fila es una observación.
+
+Una vez que tenga los datos ordenados, un primer paso común es **transformarlos**.
+La transformación incluye limitar las observaciones de interés (como todas las personas en una ciudad o todos los datos del año pasado), crear nuevas variables que sean funciones de variables existentes (como calcular la velocidad a partir de la distancia y el tiempo) y calcular un conjunto de resumen estadísticas (como recuentos o medias).
+
+Una vez que tenga datos ordenados con las variables que necesita, hay dos motores principales de generación de conocimiento: **visualización** y **modelado**.
+Estos tienen fortalezas y debilidades complementarias, por lo que cualquier análisis real se repetirá entre ellos muchas veces.
+
+La visualización es una actividad fundamentalmente humana.
+Una buena visualización le mostrará cosas que no esperaba o planteará nuevas preguntas sobre los datos.
+Una buena visualización también puede indicar que está haciendo la pregunta incorrecta o que necesita recopilar datos diferentes.
+Las visualizaciones pueden sorprenderte, pero no escalan particularmente bien porque requieren que un humano las interprete.
+
+Los modelos son herramientas complementarias a la visualización.
+Una vez que haya hecho sus preguntas lo suficientemente precisas, puede usar un modelo para responderlas.
+Los modelos son una herramienta fundamentalmente matemática o computacional, por lo que generalmente escalan bien.
+
+El último paso de la ciencia de datos es la **comunicación**, una parte absolutamente crítica de cualquier proyecto de análisis de datos.
+No importa qué tan bien sus modelos y visualización lo hayan llevado a comprender los datos, a menos que también pueda comunicar sus resultados a otras personas.
+
+## Introducción a R
+
+R tiene sus orígenes en S, un lenguaje de programación creado en los Laboratorios Bell de Estados Unidos.
+Dado que S y sus estándares son propiedad de los Laboratorios Bell, lo cual restringe su uso, Ross Ihaka y Robert Gentleman, de la Universidad de Auckland en Nueva Zelanda, decidieron crear una implementación abierta y gratuita de S.
+Este trabajo, que culminaría en la creación de R, se inició en 1992, teniendo una versión inicial del lenguaje en 1995 y en el 2000 una versión final estable.
+
+Aunque R fue originalmente pensado para el análisis estadístico básico y avanzado, con el paso del tiempo los usuarios de este lenguaje han creado extensiones a R, llamadas paquetes o librerías, que han ampliado su funcionalidad.
+En la actualidad es posible realizar en R minería de textos, procesamiento de imágenes, visualizaciones interactivas de datos y procesamiento de Big Data, entre muchas otras cosas.
+
+En R, todo es un **objeto**.
+Todos los datos y estructuras de datos son objetos.
+Además, todos los objetos tienen un nombre para identificarlos.
+Una función es una serie de operaciones a la que les hemos asignados un nombre.
+Las funciones aceptan argumentos, es decir, especificaciones sobre cómo deben funcionar --\> `nombre_de_la_función()`.
+Por ejemplo: `mean()`, `summary()`, ...
+
+Para obtener la documentación de una función, escribimos el `?` antes de su nombre y lo ejecutamos.
+También podemos usar la función `help()`, con el nombre de la función, como por ejemplo `help("mean")`, `help(package = "stats")`.
+
+El directorio o carpeta de trabajo es el lugar en nuestra computadora en el que se encuentran los archivos con los que estamos trabajando en R.
+Este es el lugar donde R buscará los archivos para importarlos y al que serán exportados, a menos que indiquemos otra cosa.
+
+R permite recuperar y ejecutar órdenes previas.
+Las flechas verticales del teclado puede utilizarse para recorrer el historial de órdenes.
+Puedes encontrar cuál es tu directorio de trabajo con la función `getwd()`.
+Sólo tienes que escribir la función en la consola y ejecutarla.
+Puedes cambiar el directorio de trabajo usando la función setwd(), dando como argumento la ruta del directorio que quieres usar, `setwd("C:\otro_directorio")`.
+
+R puede ser expandido con paquetes.
+Cada paquete es una colección de funciones diseñadas para atender unas tareas específicas.
+Podemos instalar paquetes usando la función `install.packages()`, dando como argumento el nombre del paquete que deseamos instalar, entre comillas.
+
+Por ejemplo, para instalar el paquete `readr`, ejecutamos: `install.packages("readr")`.
+
+Una vez concluida la instalación de un paquete, podrás usar sus funciones con la función `library()`.
+
+```{r}
+library(readr)
+```
+
+Cuando haces esto, R importa las funciones contenidas en el paquete al entorno de trabajo actual.
+Los paquetes que hemos importado en nuestra sesión actual aparecen al llamar `sessionInfo()`.
+
+## Datos en R
+
+Los tipos de datos de uso más común en R son los siguientes:
+
+**Entero** 7 (integer), **Numérico** 1.3 (numeric), **Cadena de texto** "uno" (character), **Factor** uno (factor), **Lógico** TRUE (logical), **Perdido** NA (NA), **Vacio** NULL (null).
+
+Como su nombre lo indica, los datos enteros representan números enteros, sin una parte decimal o fraccionaria, que pueden ser usados en operaciones matemáticas.
+
+Por su parte, los datos de tipo numéricos representan números reales.
+Los datos numéricos también son llamados *doble* o *float* (flotantes).
+Este nombre se debe a que, en realidad, son números de doble precisión, pues tienen una parte entera y una fraccionaria decimal, y son llamados *float* debido a que se usa un punto flotante para su representación computacional.
+
+El tipo *character* representa texto y es fácil reconocerlo porque un dato siempre esta rodeado de comillas, simples o dobles.
+De manera convencional, nos referimos a este tipo de datos como cadenas de texto, es decir, secuencias de caracteres.
+
+Un *Factor* en R es una estructura de datos utilizada para representar un vector como datos categóricos.
+El objeto factor toma un número acotado de diferentes valores llamados niveles.
+Los factores son muy útiles cuando se trabaja con columnas de caracteres de data frames, para crear gráficos de barras y crear resúmenes estadísticos de variables categóricas.
+
+Los datos de tipo lógico sólo tienen dos valores posibles: verdadero (TRUE) y falso (FALSE).
+Representan si una condición o estado se cumple, es verdadero, o no, es falso.
+
+En R, usamos `NA` para representar datos perdidos, mientras que NULL representa la ausencia de datos.
+
+En R, los datos pueden ser coercionados, es decir, forzados, para transformarlos de un tipo a otro: `as.integer()` (Entero), `as.numeric()` (Numérico), `as.character()` (Cadena de texto), `as.factor()` (Factor), `as.logical()` (Lógico), `as.null()` (NULL).
+La función `class()` recibe como argumento un dato o vector y devuelve el nombre del tipo al que pertenece, en inglés.
+
+**Operadores aritméticos**
+
+-   Suma $5 + 3 = 8$
+
+-   Resta $5 - 3 = 2$
+
+-   Multiplicación \* $5 * 3 = 18$
+
+-   División $5 /3 = 1.666667$
+
+-   Potencia $5 ^ 3 = 125$
+
+-   División entera %%
+
+**Operadores relacionales**
+
+-   Menor que `5 < 3  FALSE`
+
+-   Menor o igual que `5 <= 3 FALSE`
+
+-   Mayor que `5 > 3  TRUE`
+
+-   Mayor o igual que `5 >= 3 TRUE`
+
+-   Exactamente igual que `5 == 3 FALSE`
+
+-   No es igual que `5 != 3 TRUE`
+
+## Estructura de datos en R
+
+Creamos **vectores** usando la función `c()` (combinar).
+
+Llamamos esta función y le proporcionamos como argumento los elementos que deseamos combinar en un vector, separados por comas.
+Algunos ejemplos son:
+
+```{r}
+v1 <- c(1, 2, 3, 5, 8, 13)
+v2 <- c("arbol", "casa", "persona")
+1:10
+mi_vector <- c(2, 3, 6, 7, 8, 10, 11)
+mi_vector * 2
+mi_vector > 7
+```
+
+El comando dos puntos para la definición de vectores es un caso particular de la función `seq()`, que nos permite construir vectores que son sucesiones equiespaciadas.
+La instrucción para este comando es `seq(from,  to,  by, length, along)`
+
+Sus argumentos principales son:
+
+-   *from* Nos indica el valor inicial de la sucesión.
+
+-   *to* Nos indica el valor final de la sucesión.
+
+-   *by* Marca el salto entre los valores.
+
+-   *length* Indica la longitud del vector resultante.
+
+```{r}
+seq(from=1, to=15, length=8)
+```
+
+Existe una gran cantidad de formas de introducir vectores.
+Veamos algunas otras.
+
+```{r}
+x <- 1:7   #Igual que c(1,2,3,4,5,6,7)
+x <- rep(1, 100)  #x es un vector con 100 unos.
+x <- rep(1:2, times = 5)  #repite 1,2 cinco veces.
+x <- rep(1:2, each = 2) # repite cada elemento dos veces.
+```
+
+Las **matrices** y **arrays** pueden ser descritas como vectores multidimensionales.
+Al igual que un vector, únicamente pueden contener datos de un sólo tipo, aunque tienen más dimensiones.
+
+Creamos matrices en R con la función `matrix()`.
+La función `matrix()` acepta dos argumentos básicos para determinar su estructura, `nrow` y `ncol`.
+Con ellos especificamos el número de filas y columnas que definen la matriz.
+
+```{r}
+m1 <- matrix(1:12)
+m2 <- matrix(1:12, nrow = 3, ncol = 4)
+m3 <- matrix(1:12, nrow = 5, ncol = 4)
+```
+
+Otro procedimiento para crear matrices es la unión vectores con las siguientes funciones:
+
+-   `cbind()` para unir vectores, por columnas.
+
+-   `rbind()` para unir vectores, por filas.
+
+De este modo podemos crear cuatro vectores y unirlos para formar una matriz.
+Cada vector será una fila en esta matriz.
+
+```{r}
+vector_1 <- 1:4
+vector_2 <- 5:8
+vector_3 <- 9:12
+vector_4 <- 13:16
+matriz <- rbind(vector_1, vector_2, vector_3, vector_4)
+matriz
+```
+
+Creamos cuatro vectores, cada uno de tamaño igual a cuatro.
+
+Usamos `t()` para transponer.
+Algunas operaciones con las matrices son las siguientes:
+
+| Operaciones | Descripción                                 |
+|-------------|---------------------------------------------|
+| `+,-,*,/`   | Operaciones aritméticas elemento a elemento |
+| `%*%`       | Producto matricial                          |
+| solve()     | Inversa de una matriz                       |
+| det()       | Determinante                                |
+| eigen()     | Valores y vectores propios                  |
+| `%x%`       | Producto de Kronecker                       |
+| t()         | Traspuesta de una matriz                    |
+
+Los **arrays** son otro tipo similar a las matrices pero pueden tener más de dos dimensiones.
+Son objetos con *n* dimensiones que se definen mediante el comando `array(datos, dimensiones)`.
+
+## Los *data frames* y las *listas*
+
+Para saber los datos de ejemplo que tenemos cargados en nuestra sesión de R podemos utilizar la instrucción `data()`.
+
+Los **data frames** son estructuras de datos de dos dimensiones (rectangulares) que pueden contener datos de diferentes tipos, por lo son heterogéneas.
+Esta estructura de datos es la más usada para realizar análisis de datos y seguro te resultará familiar si has trabajado con otros paquetes estadísticos.
+
+Podemos entender un *dataframe* como una versión más flexible de una matriz.
+Mientras que en una matriz todas las celdas deben contener datos del mismo tipo, las filas de un data frame admiten datos de distintos tipos, pero sus columnas conservan la restricción de contener datos de un sólo tipo.
+
+Para crear un data frame usamos la función `data.frame()`.
+Esta función nos pedirá un número de vectores igual al número de columnas que deseemos.
+Todos los vectores que proporcionemos deben tener el mismo tamaño.
+Esto es muy importante: un data frame está compuesto por vectores.
+Además, podemos asignar un nombre a cada vector, que se convertirá en el nombre de la columna.
+Como todos los nombres, es recomendable que este sea claro, no ambiguo y descriptivo.
+
+```{r}
+mi_df <- data.frame(
+  "entero" = 1:4, 
+  "factor" = c("a", "b", "c", "d"), 
+  "numero" = c(1.2, 3.4, 4.5, 5.6),
+  "cadena" = as.character(c("a", "b", "c", "d"))
+)
+
+mi_df
+```
+
+```{r}
+# Podemos usar dim() en un data frame
+dim(mi_df)
+
+# El largo de un data frame es igual a su número de columnas
+length(mi_df)
+
+# names() nos permite ver los nombres de las columnas
+names(mi_df)
+
+# La clase de un data frame es data.frame
+class(data.frame) 
+```
+
+Convertimos matrices a data frames:
+
+```{r}
+matriz <- matrix(1:12, ncol = 4)
+df <- as.data.frame(matriz)
+class(df)
+```
+
+Al igual que con una matriz, si aplicamos una operación aritmética a un data frame, esta se vectorizará.
+
+Los resultados que obtendremos dependerán del tipo de datos de cada columna.
+R nos devolverá todas las advertencias que ocurran como resultado de las operaciones realizadas, por ejemplo, aquellas que hayan requerido una coerción.
+
+Las **listas**, al igual que los vectores, son estructuras de datos unidimensionales, sólo tienen largo, pero a diferencia de los vectores cada uno de sus elementos puede ser de diferente tipo o incluso de diferente clase, por lo que son también estructuras heterogéneas.
+
+Podemos tener listas que contengan vectores, matrices, arrays, data frames u otras listas.
+Esta última característica es la razón por la que una lista puede ser considerada un vector recursivo, pues es un objeto que puede contener objetos de su misma clase.
+
+Para crear una lista usamos la función `list()`, que nos pedirá los elementos que deseamos incluir en nuestra lista.
+Para esta estructura, no importan las dimensiones o largo de los elementos que queramos incluir en ella.
+Al igual que con un data frame, tenemos la opción de poner nombre a cada elemento de una lista.
+Por último, no es posible vectorizar operaciones aritméticas usando una lista, obtendremos un error como resultado.
+
+```{r}
+mi_vector <- 1:10
+mi_matriz <- matrix(1:4, nrow = 2)
+mi_df     <- data.frame("num" = 1:3, "let" = c("a", "b", "c"))
+
+mi_lista <- list("un_vector" = mi_vector, "una_matriz" = mi_matriz, "un_df" = mi_df)
+
+mi_lista
+```
+
+Al igual que con los datos, cuando intentamos hacer operaciones con una estructura de datos, R intenta coercionarla al tipo apropiado para poder llevarlas a cabo con éxito.
+
+También podemos usar alguna de las funciones de la familia `as()` para coercionar de un tipo de estructura de datos a otro.
+A continuación se presentan las más comunes.
+
+| Función         | Coerciona a | Coerciona exitosamente a        |
+|-----------------|-------------|---------------------------------|
+| as.vector()     | Vector      | Matrices                        |
+| as.matrix()     | Matrices    | Vectores, Data frames           |
+| as.data.frame() | Data frame  | Vectores, Matrices              |
+| as.list()       | Lista       | Vectores, Matrices, Data frames |
+
+## Subconjunto de datos
+
+En R, podemos obtener subconjuntos de nuestras estructuras de datos.
+Es decir, podemos extraer partes de una estructura de datos (nuestro conjunto).
+
+### Subconjunto de datos mediante índices
+
+Un índice en R representa una posición.
+Cuando usamos índices le pedimos a R que extraiga de una estructura los datos que se encuentran en una o varias posiciones específicas dentro de ella.
+
+A diferencia de la mayoría de los lenguajes de programación, los índices en R empiezan en 1, no en 0.
+El índice del primer elemento de una estructura de datos siempre es 1, el segundo 2, y así sucesivamente.
+
+Un aspecto muy importante de este procedimiento es que, para data frames y listas, cuando extraemos un subconjunto de un objeto usando corchetes, obtenemos como resultado un objeto de la misma clase que el objeto original.
+Si extraemos un subconjunto de un data frame, obtenemos un vector; si extraemos de una lista, obtenemos una lista.
+
+Creamos un vector y vemos varios ejemplos.
+
+```{r}
+vec <- c("a","b","c","d","e","f")
+vec[3]
+vec[3:5]
+vec[c(2,5)]
+vec[-1]
+vec[-1:-5]
+```
+
+Para estructuras de dos dimensiones, como són matrices y data frames, el primer vector de un índice, antes de una coma, es la posición en los renglones y el segundo es la posición las columnas.
+
+Creamos ahora un data frame:
+
+```{r}
+mi_df <- data.frame("nombre" = c("Armando", "Elsa", "Ignacio", "Olga"),
+                    "edad" = c(20, 24, 22, 30),
+                    "sexo" = c("H", "M", "M", "H"),
+                    "grupo" = c(0, 1, 1, 0))
+mi_df
+```
+
+Vemos algunos ejemplos.
+
+```{r}
+dim(mi_df)
+mi_df[1]
+mi_df[c(1, 3)]
+mi_df[3,]
+```
+
+```{r}
+mi_df[2:4, 3]
+```
+
+```{r}
+mi_df[1:2, c(2, 4)]
+```
+
+El procedimiento anterior para data frames funciona de la misma manera para las matrices, con una excepción.
+Si usamos como índice un sólo número, entonces obtendremos el valor que se encuentre en esa posición, contando celdas de arriba a abajo y de izquierda a derecha.
+
+### Subconjunto de datos mediante nombres
+
+Un segundo método para extrar subconjuntos da datos es usar los nombres de los elementos en una estructura de datos.
+Esta forma de obtener subconjuntos es utilizada principalmente con data frames y listas.
+De manera similar a los índices, utilizamos corchetes [ ] después del nombre de un objeto, pero en lugar de escribir un número, escribimos el nombre del elemento que deseamos extraer como una cadena de texto, es decir, entre comillas.
+
+```{r}
+mi_df["nombre"]
+```
+
+De igual manera que con los índices, al escribir una coma dentro de los corchetes, estamos pidiendo con ello extraer elementos en más de una dimensión.
+Lo que se encuentra escrito antes de la coma corresponde a filas y lo que está después, a columnas.
+
+Si ejecutamos el código siguiente, obtendremos NA en lugar de obtener las columnas edad y sexo.
+
+```{r}
+mi_df["edad", "sexo"]
+```
+
+Ocurre porque R intenta encontrar una fila llamada "edad" y una columna llamada "sexo"; al no encontrarlas, nos devuelve `NA`.
+Recuerda que aunque no es lo más común, las filas de un data frame pueden tener nombres.
+
+Para extraer más de una columna, escribimos un vector de texto entre los corchetes.
+Por ejemplo
+
+```{r}
+mi_df[c("edad", "sexo")]
+```
+
+Para una lista, el procedimiento es prácticamente el mismo que para un data frame, pero en lugar de obtener columnas, obtenemos los elementos contenidos en ella.
+
+La primera diferencia con los data frame es que, dado que las listas son unidimensionales, si usamos una coma dentro de los corchetes, nos será devuelto un error.
+
+### Subconjunto de datos mediante índices y nombres
+
+Al extraer subconjuntos podemos combinar índices con nombres dentro del mismo corchete para objetos multidimensionales, por ejemplo, usando un índice antes de la coma y un nombre después de ella.
+Esto nos da una gran flexibilidad para hacer subconjuntos con data frames y matrices.
+En particular, es útil al definir funciones y al trabajar con conjuntos de datos de los tenemos información incompleta.
+
+Por ejemplo, extraemos el tercer y cuarto renglón de la columna nombre en nuestro data frame `mi_df`.
+
+```{r}
+mi_df[3:4, "nombre"]
+```
+
+```{r}
+mi_df[c("1"), c(1, 4)]
+```
+
+### Subconjunto de datos mediante el símbolo dolar
+
+Otra manera en la que podemos extraer subconjuntos usando nombres, es con el signo de dolar \$.
+
+Para usar este método, basta escribir el signo dolar después del nombre de un objeto de la siguiente forma: `objeto$nombre`.
+
+Este método permite extraer un sólo elemento a la vez, funciona para data frames y listas, y para el caso de los data frame, el elemento extraido siempre será una columna.
+
+Por ejemplo, extraemos la columna nombre del data frame `mi_df`.
+
+```{r}
+mi_df$nombre
+class(mi_df$nombre)
+```
+
+El resultado de las operaciones anteriores no es un data frame, sino un vector.
+Esta es una característica distintiva de este método, al usar el signo dolar para extraer un elemento de un data frame o una lista, obtenemos un objeto de la clase que ese elemento era originalmente.
+
+### Subconjunto de datos mediante condicionales
+
+Las condicionales nos permiten obtener subconjuntos que para los que una o más condiciones son verdaderas (`TRUE`).
+
+Realizamos la extracción de subconjuntos mediante operaciones relacionales y lógicas dentro de corchetes.
+Esta operación tiene la siguiente estructura.
+
+``` yaml
+objeto[condicion, columnas_devueltas]
+```
+
+donde
+
+-   *objeto*: es un data frame.
+
+-   *condicion*: un subconjunto de objeto, que devuelva un columna como vector, al que se le aplica una o más operaciones lógicas o relacionales.
+
+-   *columnas_devueltas*: los índices o nombres de las columnas que deseamos sean devueltas como resultado.
+
+Por ejemplo,
+
+```{r}
+mi_df[mi_df$edad > 22, 1]
+```
+
+nos devuelve los nombres de las personas que tienen más de 22 años (Elsa y Olga).
+
+```{r}
+mi_df[mi_df$edad <= 22, c(1,3)]
+```
+
+Podemos realizar más de una operación relacional antes de la coma, usando operadores lógicos.
+
+```{r}
+mi_df[mi_df$edad <= 22 & mi_df$grupo == 0,  ]
+```
+
+Con esta instrucción hemos seleccionados las personas menores o iguales de 22 años que pertenecen al grupo 0.
+
+Recuerda que puedes usar el operados !
+para negaciones.
+
+```{r}
+mi_df[!(mi_df$edad <= 22 & mi_df$grupo == 0),  ]
+```
+
+Con el operador lógico !
+conseguimos el resto de personas con las características dentro del paréntesis.
+
+Una alternativa para usar condicionales, sin necesidad de corchetes, es la función `subset()`.
+Esta función tiene los siguients argumentos:
+
+-   *x*: Un objeto, generalmente un data frame.
+
+-   *subset*: Una condición, expresada como operaciones relacionales o condicionales, que se aplicarán a una columna de *x*.
+
+-   *select*: Un vector con los nombres de las columnas a conservar en el resultado.
+    Si no asignamos un valor a este argumento, se nos devuelven todas las columnas de *x*.
+
+Veamos un ejemplo.
+
+```{r}
+subset(x = mi_df, subset = edad > 22)
+```
+
+Con el ejmplo anterior obtenemos el subconjunto de las personas con más de 22 años.
+Otro ejemplo.
+
+```{r}
+subset(x = mi_df, subset = edad > 22, select = c("edad", "grupo"))
+```
+
+También hemos podido seleccionar solo un subconjunto de columnas.
+Notemos que el argumento `subset` del interior del paréntesis no necesita ir entre comillas.
+
+```{r}
+subset(x = mi_df, subset = edad > 22 & grupo == 0)
+```
+
+## Importar y exportar datos
+
+Antes de empezar a importar datos, vale la pena señalar que podemos descargar archivos de internet usando R con la función `download.file()`.
+
+La función `download.file()` nos pide como argumento `url`, la dirección de internet del archivo que queremos descargar y `destfile` el nombre que tendrá el archivo en nuestra computadora.
+Ambos argumentos como cadenas de texto, es decir, entre comillas.
+
+Por ejemplo, para descargar una copia del set iris disponible en el [UCI Machine Learning Repository](https://archive.ics.uci.edu/ml/index.php) usamos la siguiente dirección como argumento url:
+
+<https://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data>
+
+Y asignamos "iris.data" al argumento `destfile`.
+
+```{r}
+download.file(
+  url = "https://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data", 
+  destfile = "iris.data"
+  )
+```
+
+El resultado es un archivo llamado "iris.data" en nuestro directorio de trabajo.
+
+Este método funciona con prácticamente todo tipo de archivos, aunque en algunos casos será necesario agregar el argumento `method = "wb"`, por asegurar que el archivo obtenido funcione correctamente.
+
+R cuenta con la función genérica **`read.table()`**, que puede leer cualquier tipo de archivo que contenga una tabla.
+
+La condición para que R interprete un archivo como una tabla es que tenga renglones y en cada renglon, los datos estén separados por comas, o algún otro caracter, indicando columnas.
+Por supuesto, en lugar de comas podemos tener puntos y coma, dos puntos, tabuladores o cualquier otro signo de puntuación como separador de columnas.
+
+La función `read.table()` acepta un número considerable de argumentos.
+Los más importantes son los siguientes.
+
+-   *file*: La ruta del archivo que importaremos, como cadena de texto.
+    Si el archivo se encuentra en nuestro directorio de trabajo, es suficientedar el nombre del archivo, sin la ruta completa.
+
+-   *header*: Si nuestro archivo tiene encabezados, para ser interpretados como nombres de columna, definimos este argumento como TRUE.
+
+-   *sep*: El caracter que es usado como separador de columnas.
+    Por defecto es ";", aunque también se utilizan la coma o el punto.
+
+-   *col.names*: Un vector opcional, de tipo caracter, con los nombres de las columnas en la tabla.
+
+-   *stringsAsFactors*: Esta función convierte automáticamente los datos de texto a factores.
+    Si este no es el comportamiento que deseamos, definimos este argumento como FALSE.
+
+-   *dec*: es el argumento que indica el símbolo de los decimales.
+    Notemos que en ficheros .csv pueden confundirse los miles con los decimales.
+
+**Archivos .csv**
+
+Un caso particular de las tablas, son los archivos separados por comas, con extensión .csv, por Comma Separated Values, sus siglas en inglés, `read.csv()`.
+Este es un tipo de archivo comunmente usado para compartir datos, pues es compatible con una amplia variedad de sistemas diferentes además de que ocupa relativamente poco espacio de almacenamiento.
+
+El documento "R Data Import/Export" (R Core Team, 2018) contiene una guía avanzada sobre el proceso de importar y exportar todo tipo de datos.
+Puede ser consultarlo en el siguiente enlace: <https://cran.r-project.org/doc/manuals/r-release/R-data.pdf>
+
+De manera análoga a `read.table()`, la función **write.table()** nos permite exportar matrices o data frames, como archivos de texto con distintas extensiones.
+
+Los argumentos más usados de `write.table()` son los siguientes.
+
+-   *x*: El nombre del data frame o matriz a exportar.
+
+-   *file*: El nombre, extensión y ruta del archivo creado con esta función.
+    Si sólo escribimos el nombre del archivo, este será creado en nuestro directorio de tabajo.
+
+-   *sep*: El caracter que se usará como separador de columnas.
+
+-   *row.names*: Si deseamos incluir el nombre de los renglones en nuestro objeto al exportarlo, establecemos este argumento como TRUE.
+    En general, es recomendable fijarlo como FALSE, para conservar una estructura tabular más fácil de leer.
+
+-   *col.names*: Si deseamos que el archivo incluya los nombres de las columnas en nuestro objeto, establecemos este argumento como TRUE.
+    Es recomendable fijarlo como TRUE para evitar la necesidad de almacenar los nombres de columna en documentos distintos.
+
+Probemos exportando el objeto iris a un documento de texto llamado iris.txt a nuestro directorio de trabajo, usando como separador la coma, con nombres de columnas y sin nombre de renglones.
+
+```{r}
+write.table(x = iris, file = "iris.txt", sep = ",", 
+            row.names = FALSE, col.names = TRUE)
+```
+
+Importemos el archivo que hemos creado usando `read.table()`.
+
+```{r}
+iris_txt <- read.table(file = "iris.txt", header = TRUE, sep = ",")
+head(iris_txt)
+```
+
+Vamos a exportar iris como un documento **.csv**.
+
+```{r}
+write.csv(x = iris, file = "iris.csv", row.names = FALSE) 
+```
+
+R base no tiene una función para importar archivos almacenados en archivos con extensión **.xsl** y **.xslx**, creados con Excel.
+
+Para importar datos desde este tipo de archivos, necesitamos instalar el paquete **readxl**, que contiene funciones específicas para realizar esta tarea.
+Lo cargamos mediante `library(readxl)`.
+
+Usaremos, principalmente dos funciones de este paquete.
+
+-   `read_excel()`: Para importar archivos .xls y xlsx.
+
+-   `excel_sheets()`: Para obtener los nombres de las pestañas en una hoja de cálculo de Excel.
+
+------------------------------------------------------------------------
+
+# Algunas librerías en R
+
+Proponemos algunas librerías fundamentales en R para el propósito y objetivos de este curso sobre visualización.
+
+| Librería       | Breve Descripción                                                                                                                                                                                                                                                                                                                                                                                                                |
+|----------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| readr          | Proporciona una forma rápida y sencilla de leer datos rectangulares (como csv, tsv y fwf). Está diseñado para analizar de manera flexible muchos tipos de datos que se encuentran en la naturaleza, mientras sigue fallando cuando los datos cambian inesperadamente.                                                                                                                                                            |
+| dplyr          | Proporciona una gramática de manipulación de datos, proporcionando un conjunto consistente de verbos que resuelven los desafíos más comunes de manipulación de datos.                                                                                                                                                                                                                                                            |
+| ggplot2        | Librería muy utilizada para realizar todo tipo de gráficos. No produce gráficos interactivos, aunque sí animaciones.                                                                                                                                                                                                                                                                                                             |
+| plotly         | Produce gráficos de todo tipo de tipo interactivo. Muy útil.                                                                                                                                                                                                                                                                                                                                                                     |
+| rbokeh         | Librería muy conocida en Python. Su versión en R nos permite realizar gráficos interactivos.                                                                                                                                                                                                                                                                                                                                     |
+| igraph         | Análisis y visualización de grafos.                                                                                                                                                                                                                                                                                                                                                                                              |
+| leaflet        | Librería sofisticada para trabajo con mapas y datos geoespaciales. Visualización en todo tipo de mapas y redes espaciales.                                                                                                                                                                                                                                                                                                       |
+| flexdashboards | Paneles interactivos sencillos para R. Puede usar flexdashboard para publicar grupos de visualizaciones de datos relacionados como un panel. Un tablero flexible puede ser estático (una página web estándar) o dinámico (un documento interactivo Shiny).                                                                                                                                                                       |
+| scatterplot3D  | Realiza gráficos en 3D.                                                                                                                                                                                                                                                                                                                                                                                                          |
+| lubridate      | El paquete lubridate nos facilita el tratamiento de fechas en R. Uno de los puntos fuertes de lubridate reside en formar parte de la colección de librerías tidyverse, una de las más usadas en el ámbito del Data Science. Se caracteriza por el uso de un lenguaje diseñado para humanos, integrando objetos fecha y fecha-hora.                                                                                               |
+| mosaic         | Conjuntos de datos y utilidades del Proyecto MOSAIC (<http://mosaic-web.org>) utilizados para enseñar matemáticas, estadística, computación y modelado.                                                                                                                                                                                                                                                                          |
+| plyr           | Un conjunto de herramientas que resuelve un conjunto común de problemas: divide un problema en partes manejables, opera en cada parte y luego vuelve a unir todas las partes. Por ejemplo, es posible que desee: ajustar el mismo modelo a cada subconjunto de pacientes de un marco de datos, calcular rápidamente las estadísticas de resumen para cada grupo, realizar transformaciones grupales como escalar o estandarizar. |

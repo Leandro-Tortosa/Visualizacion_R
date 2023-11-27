@@ -1,0 +1,651 @@
+---
+title: "Gráficos con ggplot2"
+author: "Leandro Tortosa Grau"
+output:
+  html_document:
+    fig_caption: yes
+    number_sections: yes
+    theme: yeti
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+  pdf_document:
+    df_print: kable
+    latex_engine: xelatex
+    fig_caption: yes
+    number_sections: yes
+    toc: yes
+    toc_depth: 3
+  word_document:
+    toc: yes
+    toc_depth: '3'
+always_allow_html: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
+library(dplyr)
+library(ggplot2)
+library(ggpubr)
+library(gganimate)
+library(lubridate)
+library(hrbrthemes)
+```
+
+# Introducción a ggplot2
+
+La librería `ggplot2` constituye una de las librerías básicas de R para la visualización de gráficos estáticos. Comenzamos con las características básicas de esta librería y analizaremos algunos gráficos clásicos de la misma.
+
+## Características básicas
+
+Un gráfico realizado con **ggplot2** presenta, al menos, tres elementos:
+
+-   **Datos** (*Data*) que queremos representar (normalmente se trata de objetos del tipo data frame).
+
+-   **Características estéticas** (aesthetic mappings) que describen cómo queremos que los datos se vean en el gráfico. Se introducen con la función **`aes()`** y se refieren a:
+
+    -   posición (en los ejes).
+
+    -   color exterior (color) y de relleno (fill).
+
+    -   forma de puntos (shape).
+
+    -   tipo de línea (linetype).
+
+    -   tamaño (size).
+
+-   **Objetos geométricos** (*Geom*) representan lo que vemos en un gráficos (puntos, líneas, etc.). Todo gráfico tiene, como mínimo, una geometría. La geometría determina el tipo de gráfico:
+
+    -   geom_point (para puntos)
+
+    -   geom_lines (para lineas)
+
+    -   geom_histogram (para histograma)
+
+    -   geom_boxplot (para boxplot)
+
+    -   geom_bar (para barras)
+
+    -   geom_smooth (líneas suavizadas)
+
+    -   geom_polygons (para polígonos en un mapa)
+
+    -   otros (si ejecutáis el comando help.search("geom\_", package = "ggplot2") podéis ver el listado de objetos geométricos)
+
+Así, la estructura de código básica para construir un gráfico será:
+
+``` yaml
+ggplot(datos, aes( )) + geom_tipo( )
+```
+
+Otros elementos que conviene tener presente en un gráfico de ggplot2 son:
+
+-   **Stat** (*Stat*), transformaciones estadísticas para, generalmente, resumir datos (por ejemplo: contar frecuencias, número de intervalos en los histogramas, etc.).
+
+-   **Escalas** (*Scale*). Las escalas, por ejemplo, convierten datos en características estéticas (colores, etc.), crean leyendas y otras.
+
+-   **Coordenadas** (*coord*): sistema de coordenadas cartesianas, polares, proyecciones, etc.
+
+-   **Faceting** (*Faceting*), permite representar gráficos separados para subconjuntos de los datos originales.
+
+## Parámetros gráficos
+
+Vamos a especificar muy esquemáticamente los parámetros gráficos asociados a esta librería y las funciones principales asociados a los mismos. Para disponer de una información mucho más precisa y detallada podemos ver <http://www.sthda.com/english/wiki/ggplot2-essentials>. Los elementos del gráfico que podemos manipular en esta librería los resumimos en:
+
+-   Título principal, etiquetas de ejes y título de la leyenda.
+
+Funciones: `labs( )`, `ggtitle( )`, `xlab( )`, `ylab( )`, `update_labels( )`.
+
+-   Leyenda. Podemos cambiar su posición, título, fuentes, borrar la leyenda, cambiar el order de los items, etc.
+
+Funciones: `guides( )` establece o borra la leyenda para una estética específica. Otras funciones son: `guide_legend( )`, `guide_colourbar( )`.
+
+-   Cambiar colores automáticamente o manualmente.
+
+Funciones:
+
+-   Brewer palettes: `scale_colour_brewer()`, `scale_fill_brewer()`, `scale_color_brewer()`
+
+-   Gray scales: `scale_color_grey()`, `scale_fill_grey()`
+
+-   Manual colors: `scale_color_manual()`, `scale_fill_manual()`
+
+-   Hue colors: `scale_colour_hue()`
+
+-   Gradient, continuous colors: `scale_color_gradient()`, `scale_fill_gradient()`, `scale_fill_continuous()`, `scale_color_continuous()`
+
+-   Gradient, diverging colors: `scale_color_gradient2()`, `scale_fill_gradient2()`, `scale_colour_gradientn()`
+
+-   Forma y tamaño de los puntos.
+
+Functions: `scale_shape_manual()`, `scale_color_manual()`, `scale_size_manual()`
+
+-   Añadir texto o anotaciones a un gráfico.
+
+Functions: `geom_text()`, `annotate()`, `annotation_custom()`
+
+-   Tipos de líneas.
+
+Functions: `scale_linetype()`, `scale_linetype_manual()`, `scale_color_manual()`, `scale_size_manual()`
+
+-   Temas y colores de fondo. Existen temas específicos como theme_tufte (un tema minimalista), theme_economist (basados en los gráficos de revistas de economía), theme_stata, theme_wjs (basados en el Wall Street Journal), theme_calc (basado en el LibreOffice Calc) o el theme_hc (basado en gráficos JS).
+
+Functions: `theme()`, `theme_bw()`, `theme_grey()`, `theme_update()`, `theme_blank()`, `theme_classic()`, `theme_minimal()`, `theme_void()`, `theme_dark()`, `element_blank()`, `element_line()`, `element_rect()`, `element_text()`, `rel()`
+
+-   Escalado y transformaciones de ejes.
+
+Functions: `xlim()`, `ylim()`, `expand_limits()`: x, y axis limits
+
+`scale_x_continuous()`, `scale_y_continuous()`
+
+`scale_x_log10()`, `scale_y_log10()`: log10 transformation
+
+`scale_x_sqrt()`, `scale_y_sqrt()`: sqrt transformation
+
+`coord_trans()`
+
+`scale_x_reverse()`, `scale_y_rseverse()`
+
+`annotation_logticks()`
+
+`scale_x_date()`, `scale_y_date()`
+
+`scale_x_datetime()`, `scale_y_datetime()`
+
+-   Marcas en los ejes.
+
+Functions: `theme()`, `scale_x_discrete()`, `scale_y_discrete()`, `scale_x_continuous()`, `scale_y_continuous()`
+
+-   Añadir líneas a un gráfico.
+
+Functions: `geom_hline()`, `geom_vline()`, `geom_abline()`, `geom_segment()`
+
+-   Dividir un gráfico en múltiples gráficos.
+
+Functions: `facet_grid()`, `facet_wrap()`, `label_both()`, `label_bquote()`, `label_parsed()`
+
+# Gráficos con ggplot2
+
+Ahora vemos diversos ejemplos de gráficos realizados con la librería *ggplot2* para diversas fuentes de datos.
+
+## Gráficos sobre producción científica de estudiantes de Máster.
+
+Los primeros ejemplos de *ggplot2* los haremos a partir de un conjunto de datos de la librería **AER**, que recoge un amplio conjunto de datos de hace bastantes años, pero que nos sirven para empezar a hacer algunos gráficos sencillos. Concretamente cargamos la librería e importamos el data set "PhDPublications". Así, hacemos
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+library(AER)
+data("PhDPublications")
+```
+
+Los datos se deben a J. Scott de la Universidad de Indiana, son de 1997 y los utilizó para realizar estadísticas en sus libros de modelos de regresión estadística. Este conjunto de datos consta de 915 observaciones (estudiantes) y se recogen 6 variables:
+
+-   *articles*: número de artículos publicados por los estudiantes durante los últimos 3 años.
+
+-   *gender*: factor que indica el género.
+
+-   *married*: se refiere a si el estudiante está casado/a.
+
+-   *kids*: número de niños menores de 6 años.
+
+-   *prestige*: factor de prestigio del programa de graduado.
+
+-   *mentor*: número de artículos publicados por el director del estudiante.
+
+> **Gráfico simple del número de artículos publicados en los últimos 3 años por los 915 estudiantes**.
+
+Comenzamos por hacer un gráfico muy sencillo que refleje el número de artículos que han publicado los 915 estudiantes. Un código sencillo sería el siguiente:
+
+```{r}
+gf <- ggplot(PhDPublications, aes(x = articles))
+gf + geom_bar(color = "purple", fill = "black") + 
+  theme_classic()
+```
+
+Si observamos el gráfico, nos damos cuenta que podemos mejorar muchas cosas para que visualmente sea mucho más atractivo. Por ejemplo, podemos modificar los colores de las barras, no hay títulos, las marcas de los ejes, las leyendas de los ejes, etc.
+
+Construimos de nuevo el gráfico añadiendo o modificando algunos de los parámetros gráficos que hemos visto anteriormente.
+
+```{r}
+gf <- ggplot(PhDPublications, aes(x = articles))
+gf + geom_bar(aes(fill=after_stat(count)), col="black") +
+     scale_x_continuous(breaks = seq(0,19,1)) +
+     scale_y_continuous(breaks = seq(0,300,50)) +
+     geom_label(stat = 'count',aes(label =after_stat(count)), vjust = -0.5, size = 3) +
+     ggtitle("Artículos publicados por estudiantes de Máster") + 
+     xlab("Número de artículos") + ylab("Estudiantes") +
+     theme_minimal()
+```
+
+Tenemos en ggplot2 la posibilidad de representar dos tipos de diagramas de barras: `geom_bar( )` y `geom_col( )`.
+
+`geom_bar()` hace que la altura de la barra sea proporcional al número de casos en cada grupo (o si se proporciona la estética de peso, la suma de los pesos). Si desea que las alturas de las barras representen valores en los datos, use `geom_col()` en su lugar. `geom_bar()` usa `stat_count()` por defecto: cuenta el número de casos en cada posición x.
+
+`geom_col()` utiliza `stat_identity()`: deja los datos tal cual.
+
+`geom_bar( )` y `geom_col( )` soporta diferentes *aesthetics*: `x`, `y`, `alpha`, `colour`, `fill`, `group`, `linetype`, `size`.
+
+Con la función **`geom_text()`** podemos escribir el valor que aparece en la parte superior de las barras. Notemos que tenemos distintas posibilidades para añadir texto a un gráfico. Las funciones principales para esto son:
+
+-   `geom_text()`: añade texto directamente sobre el dibujo.
+
+-   `geom_label()`: dibuja un rectángulo debajo del texto, lo que facilita la lectura.
+
+-   `annotate()`: útil para agregar pequeñas anotaciones de texto en una ubicación particular del gráfico.
+
+-   `annotation_custom()`: agrega anotaciones estáticas que son iguales en todos los paneles.
+
+Existe una librería llamada **ggrepel** que constituye una extensión de ggplot2 y que tiene la finalidad de evitar la superposición de texto cuando unas etiquetas se mezclan con las otras. Tenemos una descripción sencilla de la librería y algunos ejemplos en <https://cran.r-project.org/web/packages/ggrepel/vignettes/ggrepel.html>.
+
+> **Gráfico de densidad del número de artículos publicados en los últimos 3 años por los 915 estudiantes, separados por género**.
+
+Creamos ahora un gráfico de densidad donde podamos ver gráficamente la distribución de los valores relacionados con el número de artículos teniendo en cuenta el género.
+
+```{r}
+ggplot(PhDPublications, aes(x = articles, fill = gender))+
+  geom_histogram(bins = 19, aes(y=..density..), alpha=0.5, position="identity")+
+  geom_density(alpha=.2)  +
+  scale_x_continuous(breaks = seq(0,19,1)) +
+  facet_grid(gender ~ .) +
+  ggtitle("Artículos publicados por estudiantes de Máster") + 
+  xlab("Número de artículos") + ylab("Estudiantes") +
+  theme_bw()
+```
+
+Los gráficos de densidad se hacen con la función `geom_density()`. En este gráfico hemos representado mediante un histograma las frecuencias del número de artículos, además de la función de densidad. También hemos separado los datos en dos gráficas, de acuerdo al género de los estudiantes mediante la función `facet_grid()`. Se ha modificado las marcas del eje X, de acuerdo al número de artículos.
+
+> **Gráfico del número de artículos publicados en los últimos 3 años por los 915 estudiantes, separados por género**.
+
+Ahora separamos los datos por el género.
+
+```{r}
+ggplot(PhDPublications, aes(x = articles, fill = gender))+ 
+  geom_bar() +
+  scale_x_continuous(breaks = seq(0,19,1)) +
+  scale_y_continuous(breaks = seq(0,300,50)) +
+  scale_fill_discrete("Género", labels = c("Hombre","Mujer")) +
+  ggtitle("Artículos publicados por estudiantes de Máster") + 
+  xlab("Número de artículos") + ylab("Estudiantes") +
+  theme_bw()
+```
+
+Podemos cambiar la posición de las barras y situar en barras distintas los datos según el género de los estudiantes.
+
+```{r}
+ggplot(PhDPublications, aes(x = articles, fill = gender))+ 
+  geom_bar(position = "dodge") +
+  scale_x_continuous(breaks = seq(0,19,1)) +
+  scale_y_continuous(breaks = seq(0,300,50)) +
+  scale_fill_discrete("Género", labels = c("Hombre","Mujer")) +
+  ggtitle("Artículos publicados por estudiantes de Máster") + 
+  xlab("Número de artículos") + ylab("Estudiantes") +
+  theme_bw()
+```
+
+> **Gráfico del número de artículos publicados en los últimos 3 años por los 915 estudiantes, separados por su condición de casados o no**.
+
+Si en lugar de separar por género queremos separar los datos de acuerdo a alguna de las otras variables, como por ejemplo si están casados, modificamos la opción `fill =`
+
+```{r}
+ggplot(PhDPublications, aes(x = articles, fill = married))+ 
+  geom_bar(position = "dodge") +
+  scale_x_continuous(breaks = seq(0,19,1)) +
+  scale_y_continuous(breaks = seq(0,300,50)) +
+  scale_fill_discrete("Casado/a", labels = c("Si","No")) +
+  geom_text(stat = 'count',aes(label = ..count.., group = married), 
+            position = position_dodge(0.8), vjust = -0.3, size = 2, color = "blue") +
+  ggtitle("Artículos publicados por estudiantes de Máster") + 
+  xlab("Número de artículos") + ylab("Estudiantes") +
+  theme_bw()
+```
+
+Notemos que con el fin de que los números aparezcan encima de las barras del diagrama, tenemos que utilizar diversas opciones que se ponen de manifiesto con la instrucción `geom_text()`. Se puede ver en [esta página](https://ggplot2.tidyverse.org/reference/geom_text.html) las opciones y argumentos posibles de esta función, así como la diferencia entre `geom_text()` y `geom_label()`.
+
+> **Gráfico del número de niños de los 915 estudiantes, separados por el número de descendientes y por género**.
+
+Ahora planteamos un histograma con el número de niños que tienen los estudiantes de Doctorado de esta base de datos.
+
+```{r}
+ggplot(PhDPublications, aes(kids)) + 
+  geom_histogram(binwidth = 1, fill = "#CC79A7", colour="gray") +
+  geom_vline(data=PhDPublications, aes(xintercept=mean(kids)), 
+             linetype="dashed", colour = "blue", size = 1.2) +
+  geom_text(stat = 'count',aes(label = ..count..), vjust = 0, size = 3) +
+  ggtitle("Número de niños de los estudiantes de Máster") + 
+  xlab("Niños") + ylab("Estudiantes") +
+  facet_grid(gender ~.) +
+  coord_flip() +
+  theme_bw()
+```
+
+Hemos introducido diversas opciones y parámetros gráficos en esta representación. En primer lugar hemos construido dos gráficos distintos para los diferentes géneros (véase más información de la opción `facet_grid()`), con el fin de realizar comparaciones. También hemos realizado una rotación de las variables con la opción `coord_flip()`. Igualmente, se ha dibujado mediante una línea discontinua el valor medio de la variable niños, utilizando `geom_vline()`.
+
+> **Gráfico del número de artículos publicados en los últimos 3 años por los 915 estudiantes frente a los artículos publicados por sus mentores o directores**.
+
+Representamos en un diagrama de puntos los datos correspondientes a los artículos publicados por los estudiantes y por sus Directores de estudios o mentores.
+
+Podemos obtener una representación mediante el siguiente código:
+
+```{r}
+ggplot(PhDPublications, aes(x = articles, y = mentor, color = gender)) + 
+  geom_point(size = 0.7, shape = 15) +
+  scale_color_manual(values = c('red','blue')) +
+  scale_x_continuous(breaks = seq(0,19,1)) +
+  scale_y_continuous(breaks = seq(0,80,10)) +
+  stat_ellipse() +
+  ggtitle("Número de artículos publicados por estudiantes/mentores") + 
+  xlab("Artículos estudiantes") + ylab("Artículos mentores") +
+  theme_gray()
+```
+
+Hemos representado el número de artículos publicados por los estudiantes frente al número de artículos publicados por los mentores de los mismos. Separamos por género y representamos cada uno de un color para diferenciarlos. Además, utilizamos `stat_ellipse()` para dibujar una elipse alrededor de la nube de puntos.
+
+Como vemos en el gráfico no existe una correlación evidente, aunque sí se observa que la mayoría de los datos se sitúan en una parte del cuadrante.
+
+Puedes probar el aspecto de los diferentes gráficos cuando cambias los temas. Por ejemplo, puedes utilizar como línea final: `theme_bw()`,`theme_grey()`, `theme_classic()`, `theme_void()`, `theme_minimal()`, `theme_update()`, `theme_dark()` y dejar el que más te guste.
+
+## Gráficos relacionados con la COVID19
+
+Para llevar a cabo algunos ejemplos básicos con la librería **ggplot2** vamos a trabajar con una tabla de datos relacionada con los casos de COVID19 en España por Comunidades Autónomas. Comenzamos leyendo nuestro fichero.
+
+```{r}
+datos_ccaas  <- read.csv("datos/datos_ccaas_agosto.csv", sep=";")
+head(datos_ccaas)
+datos_CCAA <- datos_ccaas
+```
+
+Como vemos en la tabla se recogen por días, desde el 31 de enero de 2020 hasta el mes de agosto, los casos diarios y acumulados de infectados en las distintas Comunidades Autónomas. Las distintas comunidades aparecen reflejadas en la primera columna por su código iso de 2 letras.
+
+En primer lugar, seleccionamos las columnas que nos interesan, que son las de la comunidad, la fecha, los casos y los casos acumulados.
+
+```{r}
+datos_CCAA <- select(datos_CCAA, ccaa_iso, fecha, num_casos, casos_ac)
+```
+
+Debemos convertir la columna fecha en formato de fecha para que R entienda el tipo de variable del data frame.
+
+```{r}
+datos_CCAA$fecha <- as.Date(datos_CCAA$fecha, format = "%Y-%m-%d")
+```
+
+Si quisiéramos ordenar los datos por fechas, utilizaríamos una instrucción del tipo
+
+``` yaml
+datos_CCAA <- arrange(datos_CCAA, fecha)
+```
+
+> **Gráfico del número de infectados de COVID19 hasta el 16 de agosto por Comunidades Autónomas**.
+
+Construimos un simple gráfico estático.
+
+```{r}
+ggplot(datos_CCAA, aes(x = ccaa_iso, y = casos_ac)) +
+  geom_bar(fill = "black", stat = "identity") + 
+  ggtitle("Casos de Covid19 de las Comunidades Autónomas", subtitle="Hasta el 16 de agosto de 2020") + xlab("Comunidad") + ylab("Número de casos") + theme_bw()
+```
+
+Ahora hacemos una agrupación por Comunidad Autónoma para ver los resultados totales de los casos acumulados totales durante todas las fechas.
+
+```{r}
+tabla <- datos_CCAA %>% 
+         group_by(ccaa_iso)  %>%
+         summarise(casos = sum(num_casos))
+tabla
+```
+
+Volvemos a representar estos datos de máximos.
+
+```{r}
+ggplot(tabla, aes(x = ccaa_iso, y = casos)) +
+  geom_bar(color = 'white', fill = "purple", stat = "identity") + 
+  geom_text(aes(label = casos), vjust = -0.3, size = 3, color = "blue")  +
+  ggtitle("Casos de Covid19 de las Comunidades Autónomas (hasta 16 agosto de 2020)") + 
+  xlab("Comunidad") + 
+  ylab("Número de casos") + 
+  theme_bw()
+```
+
+Ahora realizamos otra representación gráfica de estos valores de casos en las diferentes comunidades.
+
+```{r}
+ggplot(tabla, aes(x = ccaa_iso, y = casos)) +
+  geom_linerange(aes(x = ccaa_iso, ymin = 0, ymax = casos), color = 'black', size = 0.2) + 
+  geom_point(aes(color = ccaa_iso), size = 2)  +
+  ggpubr::color_palette(c('#641E16','#106A34','#9894D2','#CD38B0','#F0213D',
+                          '#0DE55F','#7E38DE','#111011','#E8EF0D','#5A4B60','#F2D2C2','#6B2A0A','#7DD737',
+                          '#3834C0','#1520C1','#5C0C10','#929542','#3F0BF0','#297C48'))+
+  ggtitle("Casos de Covid19 de las Comunidades Autónomas (16 agosto)") + 
+  xlab("Comunidad") + 
+  ylab("Número de casos") + 
+  theme_pubclean()
+```
+
+Si observamos el gráfico anterior, notamos que ha situado la leyenda en la parte superior del mismo. Nos gustaría situarlo en otro lugar, por ejemplo, en el lado derecho. La función que controla la posición y las características de la leyenda es `guides( )` y `guide_legend( )`. Las distintas opciones de la función `guide_legend( )` pueden verse en <https://ggplot2.tidyverse.org/reference/guide_legend.html>.
+
+Hay que tener en cuenta que también puedes establecer las posiciones de la leyenda mediante la instrucción `theme( )`. Escribiendo `theme(legend.position="top")` establecemos la posición de la leyenda en la parte superior. Las posibles opciones son: *top*, *bottom*, *left*, *right* y *none*.
+
+En el siguiente gráfico realizamos dos modificaciones: primero colocamos la leyenda en la parte derecha del gráfico mediante la instrucción `theme()` y `legend.position`. (Notemos que la leyenda en la parte derecha es incompatible con el tema que habíamos utilizado anteriormente, por lo que cambiamos ahora de tema y utilizamos el minimal). En segundo lugar, utilizando las posibilidades que nos ofrece la función `guide_legend`, le indicamos que nos ponga los distintos grupos en dos culumnas.
+
+```{r}
+ggplot(tabla, aes(x = ccaa_iso, y = casos)) +
+  geom_linerange(aes(x = ccaa_iso, ymin = 0, ymax = casos), color = 'black', size = 0.5) + 
+  geom_point(aes(color = ccaa_iso), size = 2)  +
+  guides(col = guide_legend(title = "Comunidad", nrow = 10)) +
+  ggpubr::color_palette(c('#641E16','#106A34','#9894D2','#CD38B0','#F0213D','#0DE55F',
+                          '#7E38DE','#111011','#E8EF0D','#5A4B60','#F2D2C2','#6B2A0A','#7DD737',
+                          '#3834C0','#1520C1','#5C0C10','#929542','#3F0BF0','#297C48'))+
+  ggtitle("Casos de Covid19 de las Comunidades Autónomas (16 agosto)") + 
+  xlab("Comunidad") + 
+  ylab("Número de casos") + 
+  theme(legend.position = "right") + 
+  theme_minimal()
+```
+
+Ahora procesamos los datos de la Comunidad Valenciana (VC) para estudiar la evolución de la pandemia.
+
+```{r}
+datos_CV <- filter(datos_CCAA, datos_CCAA$ccaa_iso == 'VC')
+datos_CV$fecha <- as.Date(datos_CV$fecha, format = "%Y-%m-%d")
+head(datos_CV)
+```
+
+> **Gráfico del número de casos de COVID19 hasta el 16 de agosto en la Comunidad Valenciana**.
+
+Los gráficos en los que los datos están referidos a una fecha concreta se llaman *time series* y tienen un tratamiento especial en R. Así, tan pronto como una variable de tiempo es reconocida en un data frame como una fecha **date**. Una vez reconocida la clase como *Date*, es posible utilizar la función **scale_x_date()** para elegir el formato que se muestra en el eje X. Tenemos diversas posibilidades.
+
+| Symbol | Significado                | Ejemplo |
+|--------|----------------------------|---------|
+| %d     | día como número            | 01-31   |
+| %a     | día de la semana abreviado | Mon     |
+| %A     | día de la semana           | Monday  |
+| %m     | mes                        | 00-12   |
+| %B     | mes no abreviado           | January |
+| %y     | año con dos dígitos        | 20      |
+| %Y     | año con cuatro dígitos     | 2020    |
+
+Luego estos símbolos se pueden ir combinando, como por ejemplo, "%Y %b %d" que se refiere al formato de fecha: *2020 Jan 05*. Un gráfico sencillo y simple que recoge el número de casos de COVID19 en la Comunidad Valenciana es el siguiente.
+
+```{r}
+p <- ggplot(datos_CV, aes(x=fecha, y=num_casos)) +
+  geom_line() + 
+  scale_x_date(date_breaks = "1 week", date_labels = "%d-%b-%Y") +
+   ggtitle("Casos de Covid19 de la Comunidad Valenciana") + 
+  xlab("Fecha") + ylab("Casos") +
+  theme_minimal() + 
+  theme(axis.text.x=element_text(angle=90, hjust=1)) 
+
+p
+```
+
+Sin embargo, podemos mejorar notablemente el gráfico anterior. Podemos cambiar el formato de los ejes, especialmente en el eje X con el formato de fecha.
+
+```{r}
+q <- ggplot(datos_CV, aes(x=fecha, y=num_casos)) +
+  geom_line(color = "blue", size = 0.5) +
+  geom_point(color = "brown", size =0.2) +
+  scale_x_date(date_breaks = "1 week", date_labels = "%d-%b") +
+  ggtitle("Casos de Covid19 de la Comunidad Valenciana") + 
+  xlab("") + ylab("Casos") +
+  theme_minimal() +
+  theme(axis.text.x=element_text(angle=30, hjust=1)) 
+
+q
+```
+
+> Gráfico del número de casos de COVID19 hasta el 16 de agosto por Comunidades.
+
+Ahora establecemos un gráfico con todas las comunidades. Para ello utilizamos el data frame *datos_CCAA* donde se encuentran todos los datos
+
+```{r}
+q1 <- ggplot(datos_CCAA, aes(x=fecha, y=num_casos)) +
+  geom_line(aes(color = ccaa_iso)) +
+  scale_x_date(date_breaks = "15 days", date_labels = "%d-%b") +
+  ggtitle("Casos de Covid19 por Comunidades Autónomas") + 
+  xlab("") + ylab("Casos") +
+  theme_minimal() +
+  theme(axis.text.x=element_text(angle=60, hjust=1)) 
+
+q1
+```
+
+Como vemos en el último gráfico, cuando se representan todas las comunidades a la vez no se observan las características esenciales de los datos de forma individual. La no interactividad con el gráfico no nos permite manipular el mismo. Veremos más adelante otras librerías que nos permitan efectuar visualizaciones más completas.
+
+> Gráfico del número de casos de COVID19 hasta el 16 de agosto comparando dos o más Comunidades.
+
+Si queremos comparar los resultados de dos o más comunidades, podemos hacer un tratamiento previo de los datos, construyendo el dat frame deseado y representando sobre ese data frame. Así, por ejemplo, supongamos que queremos comparar los datos de las Comunidades de Madrid y la Comunidad Valenciana. El primer paso será construir el data frame a partir de los datos de estas comunidades, extrayéndolos de la tabla general.
+
+```{r}
+datos1 <- filter(datos_CCAA, ccaa_iso %in% c("MD", "VC"))
+```
+
+Hemos construido el data frame *datos1* con los resultados de las comunidades de Madrid y de Valencia. Ahora ya podemos representar gráficamente estos resultados para compararlos.
+
+```{r}
+q2 <- ggplot(datos1, aes(x=fecha, y=num_casos)) +
+  geom_line(aes(color = ccaa_iso)) +
+  guides(col = guide_legend(title = "Comunidad")) +
+  scale_x_date(date_breaks = "10 days", date_labels = "%d-%b") +
+  ggtitle("Casos de Covid19 de Madrid y Comunidad Valenciana") + 
+  xlab("") + ylab("Casos") +
+  theme_minimal() +
+  theme(axis.text.x=element_text(angle=70, hjust=1)) 
+
+q2
+```
+
+# Algunas extensiones a ggplot2
+
+Veamos algunas extensiones interesantes de la librería *ggplot*.
+
+## Un asistente de gráficos: ggThemeAssist
+
+La librería **ggThemeAssist** constituye un RStudio-Addin que utiliza la librería *rstudioapi* y nos proporciona un GUI para la edición de temas de la librería ggplot2. En ggplot2 tenemos una serie de temas ya establecidos y predeterminados con una ciertas características; sin embargo, con esta extensión podemos modificar el tema cambiando las diferentes opciones sobre un entorno gráfico.
+
+**Instalación**
+
+La librería *ggThemeAssist* presenta dependencias de las librerías *shiny* y *miniUI*. La instalación puede realizarse mediante el comando devtools de la misma librería mediante
+
+``` yaml
+if (!requireNamespace("devtools", quietly = TRUE))
+  install.packages("devtools")
+devtools::install_github("calligross/ggthemeassist")
+```
+
+También podemos descargarla de la forma habitual en RStudio mediante el interface gráfico.
+
+Una vez instalada, **ggThemeAssist** ya está disponible en el menú Addins dentro de las herramientas de RStudio.
+
+**Uso**
+
+Para editar temas de *ggplot2*, simplemente resalte un objeto ggplot2 en su secuencia de comandos actual y ejecute el complemento desde el menú Complementos. ggplot2 analizará su gráfico actual, actualizará sus valores predeterminados a su especificación actual y le dará una vista previa. Utilice los widgets de entrada para dar forma a sus ideas. Después de terminar **ggThemeAssist**, se inserta en su script una cadena de caracteres que contiene los cambios deseados en la notación *ggplot2* estándar. Volver a ejecutar su script ahora produce la trama que acaba de configurar usando **ggThemeAssist**.
+
+Para hacer un ejemplo sencillo tomamos el gráfico *q2*, en el que se muestran los datos comparados de dos Comunidades Autónomas. Podríamos decir que el gráfico más simple sería:
+
+```{r}
+q2 + theme(panel.grid.major = element_line(linetype = "blank"),
+    panel.grid.minor = element_line(linetype = "blank"),
+    axis.text = element_text(family = "mono"),
+    panel.background = element_rect(fill = NA),
+    plot.background = element_rect(fill = "beige"),
+    legend.key = element_rect(fill = "cadetblue2"),
+    legend.background = element_rect(fill = "lemonchiffon")) +labs(x = NULL)
+```
+
+```{r}
+q2 + theme(panel.grid.major = element_line(colour = "white"), 
+    panel.grid.minor = element_line(colour = "hotpink", 
+        linetype = "blank"), axis.text = element_text(family = "serif", 
+        colour = "aquamarine4"), panel.background = element_rect(fill = "honeydew1"), 
+    plot.background = element_rect(fill = "aliceblue")) +labs(title = "Evolución pandemia", x = NULL, 
+    y = "CASOS") 
+q2
+q3 <- q2
+```
+
+Evidentemente, si no especificamos ciertas propiedades geométricas del gráfico, la visualización es muy deficiente. Seleccionamos **q3** y nos vamos a la herramienta *Addins* para abrir el asistente de gráficos. Es importante recalcar que para que entre en funcionamiento y se active el asistente de gráfico debemos **seleccionar** un objeto gráfico.
+
+```{r}
+q3 + theme(axis.line = element_line(size = 0.2,
+    linetype = "solid"), panel.grid.major = element_line(linetype = "dotted"),
+    panel.grid.minor = element_line(linetype = "dotted"),
+    axis.text = element_text(colour = "gray24"),
+    panel.background = element_rect(fill = "floralwhite",
+        size = 0.1), plot.background = element_rect(fill = "cornsilk1")) +labs(x = NULL) + theme(plot.background = element_rect(fill = "antiquewhite"))
+
+```
+
+También podemos optar por una construcción mucho más minimalista realizando las oportunas modificaciones utilizando el asistente. Notemos cómo el asistente añade las características que hemos seleccionado en el trozo de R correspondiente.
+
+```{r}
+q3 <- ggplot(datos1, aes(x=fecha, y=num_casos)) +
+  geom_line(aes(color = ccaa_iso)) +
+  guides(col = guide_legend(title = "Comunidad")) +
+  scale_x_date(date_breaks = "10 days", date_labels = "%d-%m") +
+  scale_y_continuous(breaks = seq(0,3100,500))
+
+q3 + theme(axis.ticks = element_line(size = 0.1), 
+    axis.title = element_text(size = 10), 
+    axis.text = element_text(size = 9), axis.text.x = element_text(size = 9, 
+        angle = 20), plot.title = element_text(size = 11, 
+        face = "bold"), panel.background = element_rect(fill = NA), 
+    legend.position = c(0.9, 0.8)) +labs(title = "Casos de COVID19 en Madrid y Comunidad Valenciana", 
+    x = NULL, y = "Casos") 
+
+```
+
+## Temas y extensiones
+
+Existen una serie de temas dentro de la librería base **ggplot2** que podemos utilizar sin necesidad de instalar otras librerías. Estos temas y opciones son:
+
+> theme(), theme_bw(), theme_grey(), theme_update(), theme_blank(), theme_classic(), theme_minimal(), theme_void(), theme_dark(), element_blank(), element_line(), element_rect(), element_text(), rel()
+
+La librería **ggthemes** implementa nuevos temas para la representación de gráficos. Podemos ver un resumen gráfico de las diferentes opciones de apariencia de las gráficas en la página <https://yutannihilation.github.io/allYourFigureAreBelongToUs/2/>. Algunos ejemplos interesantes son:
+
+-   **plot_grid()**: <https://yutannihilation.github.io/allYourFigureAreBelongToUs/cowplot/plot_grid/>
+
+-   **theme_wsj**: el tema que utiliza el Wall Street Journal.
+
+-   **theme_tufte()**: tema con el mínimo de tinta posible.
+
+-   **theme_stata()**: <https://yutannihilation.github.io/allYourFigureAreBelongToUs/ggthemes/theme_stata/>
+
+-   **theme_map()** Limpia el dibujo para dibujar mapas.
+
+-   **theme_gdocs()**: tema relacionado con los gráficos que hace Google Docs.
+
+-   **theme_few()**: <https://yutannihilation.github.io/allYourFigureAreBelongToUs/ggthemes/theme_few/>
+
+Para una descripción más precisa de las funciones y las posibilidades de esta librería, véase <https://www.rdocumentation.org/packages/ggthemes/versions/3.5.0>, por ejemplo, donde aparecen todas las funciones disponibles descritas y documentadas.
+
+Tenemos la opción de crear nuestro propio tema, a partir de la función base del tema **theme_gray()** que es el tema por defecto en *ggplot2*. Los pasos que debemos seguir para hacer esto son los siguientes:
+
+1.  Cambiamos el tema para la sesión de R utilizando la función **theme_set()** de la forma:
+
+``` yaml
+theme_set(theme_gray(base_size = 20))
+```
+
+2.  Podemos extraer y modificar el código R para el tema elegido.
+
+``` yaml
+theme_gray
+```

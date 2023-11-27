@@ -1,0 +1,480 @@
+---
+title: "Gráficos de datos temporales"
+author: "Leandro Tortosa Grau"
+output:
+  pdf_document:
+    df_print: kable
+    latex_engine: xelatex
+    fig_caption: yes
+    number_sections: yes
+    toc: yes
+    toc_depth: 3
+  html_document:
+    fig_caption: yes
+    number_sections: yes
+    theme: yeti
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+  word_document:
+    toc: yes
+    toc_depth: '3'
+always_allow_html: yes
+editor_options: 
+  markdown: 
+    wrap: sentence
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
+library(xts)
+library(dygraphs)
+library(plotly)
+library(dplyr)
+library(ggplot2)
+library(ggpubr)
+library(gganimate)
+library(lubridate)
+#library(hrbrthemes)
+library(htmlwidgets)
+library(crosstalk)
+```
+
+# La librería dygraphs
+
+El paquete `dygraphs` es una interfaz de R para la biblioteca de gráficos de JavaScript **dygraphs**.
+Proporciona una gran cantidad de recursos para representar gráficamente datos de series temporales en R, entre los que se incluyen:
+
+-   Traza automáticamente objetos de series temporales `xts` (o cualquier objeto convertible a `xts`).
+
+-   Visualización de ejes y series altamente configurable (incluido el segundo eje Y opcional).
+
+-   Funciones interactivas enriquecidas que incluyen zoom/panorámica y resaltado de series/puntos.
+
+-   Muestra las barras superiores/inferiores (por ejemplo, intervalos de predicción) alrededor de la serie.
+
+-   Varias superposiciones de gráficos, incluidas regiones sombreadas, líneas de eventos y anotaciones de puntos.
+
+-   Incrustación perfecta en documentos de R Markdown y aplicaciones web Shiny.
+
+### Objetos *xts*
+
+Hay muchas clases de objetos en R.
+La librería **xts** nos permite construir y manejar objetos `xts`.
+
+Podemos pensar en los objetos `xts` como matrices de R normales, pero con propiedades especiales.
+Estas características le permiten manipular sus datos en función del tiempo, ya que se introduce una variable temporal.
+Antes de que podamos comenzar a explotar estas características, será útil ver cómo los objetos `xts` se relacionan con sus compañeros en base-R.
+
+Los objetos `xts` son simples.
+Los interpretamos como una matriz de observaciones combinada con un índice de fechas y horas correspondientes.
+Entonces:
+
+-   xts = matriz datos + fechas
+
+La construcción del objeto principal `xts` toma varios argumentos, pero los dos más importantes son **x** para los datos y **order.by** para el índice.
+El objeto **x** debe ser un vector o una matriz, mientras que **order.by** es un vector que debe tener la misma longitud o número de filas que **x**, ser un objeto de fecha o hora adecuado (¡muy importante!) y estar en orden creciente.
+
+Vamos a crear nuestro primer objeto `xts`.
+Seguimos los pasos siguientes:
+
+-   Creamos un objeto llamado *data* que contenga cinco números aleatorios usando `rnorm()`.
+
+-   Creamos un índice de clase *fecha* a partir de "2016-01-01" de cinco fechas de longitud.
+
+-   Utilizamos el constructor `xts` para crear un objeto llamado `smith` utilizando *datos* y *fecha* como índice.
+
+-   Creamos un objeto llamado `bday` que contenga un objeto de fecha POSIXct que contenga la fecha "1899-05-08".
+
+-   Creamos un objeto `xts` llamado *hayek* usando datos, fechas y un nuevo atributo llamado *born*, que debe contener el objeto de cumpleaños `bday` que acaba de crear.
+
+Lo hacemos mediante el código siguiente:
+
+```{r}
+# Create the object data using 5 random numbers
+data <- rnorm(5)
+
+# Create dates as a Date class object starting from 2016-01-01
+dates <- seq(as.Date("2016-01-01"), length = 5, by = "days")
+
+# Use xts() to create smith
+smith <- xts(x = data, order.by = dates)
+
+# Create bday (1899-05-08) using a POSIXct date class object
+bday <- as.POSIXct("1899-05-08")
+
+# Create hayek and add a new attribute called born
+hayek <- xts(x = data, order.by = dates, born = bday)
+```
+
+Tenemos un objeto `xts` llamado **hayek**.
+Si quisiéramos extraer los datos de este objeto, haríamos
+
+```{r}
+hayek_core <- coredata(hayek)
+class(hayek_core)
+```
+
+Análogamente extraemos el índice de los datos mediante la instrucción
+
+```{r}
+hayek_index <- index(hayek)
+class(hayek_index)
+```
+
+# Un primer ejemplo: datos del COVID19
+
+Tomamos el data set de los datos de la COVID19 en España que ya trabajamos en el capítulo de *ggplot*.
+Comenzamos importando los datos.
+Creamos una tabla con los datos del número de casos y los casos acumulados de las distintas comunidades a lo largo del tiempo.
+
+```{r}
+datos_ccaas <- read.csv("datos/datos_ccaas_0507.csv", row.names=NULL, sep=";")
+
+datos_CCAA <- datos_ccaas
+datos_CCAA <- select(datos_CCAA, ccaa_iso, fecha, num_casos, casos_ac)
+datos_CCAA$fecha <- as.Date(datos_CCAA$fecha, format = "%Y-%m-%d")
+datos_CCAA <- arrange(datos_CCAA, fecha)
+
+head(datos_CCAA)
+```
+
+Ahora tomamos los datos de la Comunidad Valenciana.
+
+```{r}
+datos_VC <- filter(datos_CCAA, ccaa_iso == 'VC')
+head(datos_VC)
+```
+
+Vamos a crear un objeto `xts`.
+
+```{r}
+ob1_xts <- xts(x = datos_VC, order.by = datos_VC$fecha)
+class(ob1_xts)
+```
+
+```{r}
+dygraph(ob1_xts)
+```
+
+Este gráfico podemos modificarlo notablemente introduciendo algunas carcaterísticas que nos aporta la librería.
+Introducimos el efecto de resaltado de las series.
+Cuando los usuarios colocan el ratón sobre las series y los puntos en el gráfico, aparece un efecto de resaltado en la superficie del gráfico.
+Se puede utilizar la función `dyHighlight` para personalizar cómo aparece el resaltado.
+También modificamos las características de los ejes, mediante las instrucciones `dyAxis` y `dxAxis`.
+Otra de las características que introducimos es la de eliminar la leyenda general.
+
+```{r}
+dygraph(ob1_xts, main = "Casos de COVID19 en la Comunidad Valenciana") %>%
+  dyHighlight(highlightCircleSize = 5, 
+              highlightSeriesBackgroundAlpha = 0.2,
+              hideOnMouseOut = FALSE) %>%
+  dyAxis("x", drawGrid = FALSE) %>%
+  dyAxis("y", label = "Casos de COVID19") %>%
+  dyLegend(show = "follow")
+```
+
+Podemos introducir un selector o rango de fechas, mediante la instrucción `dyRangeSelector()`.
+
+```{r}
+dygraph(ob1_xts, main = "Casos de COVID19 en la Comunidad Valenciana") %>%
+  dyHighlight(highlightCircleSize = 5, 
+              highlightSeriesBackgroundAlpha = 0.2,
+              hideOnMouseOut = FALSE) %>%
+  dyAxis("x", drawGrid = FALSE) %>%
+  dyAxis("y", drawGrid = FALSE, label = "Casos de COVID19") %>%
+  dyLegend(show = "follow")  %>%
+  dyRangeSelector()
+```
+
+# Un segundo ejemplo: datos del PIB mundial
+
+```{r}
+library(gapminder)
+datos = gapminder                                                        
+head(datos)
+```
+
+En esta tabla tenemos los datos sobre la población, esperanza de vida y PBI per cápita de los países del mundo a lo largo de un conjunto de años desde el 1952.
+Supongamos que queremos ver la evolución de algunos de estos valores en España.
+Comenzamos seleccionando sus datos.
+
+```{r}
+PBI_spain <- filter(datos, country == "Spain")
+PBI_spain <- select(PBI_spain, year, lifeExp, pop,gdpPercap)
+head(PBI_spain)
+```
+
+Ahora, si nos fijamos en la tabla, tenemos el problema de que la columna *year* corresponde con la clase *int* y debería ser de la clase *date*.
+Debemos hacer referencia a columnas específicas en lugar de simplemente hacer referencia al data frame.
+Si la variable que contiene las fechas enteras está en un data frame llamado **df** y la columna de fechas es **x**, podemos hacer:
+
+``` yaml
+df <- transform(df, x = as.Date(as.character(x), "%Y%m%d"))
+```
+
+En nuestro caso, podemos escribir el código:
+
+```{r}
+PBI_spain <- transform(PBI_spain, year = as.Date(as.character(year), "%Y"))
+head(PBI_spain)
+```
+
+Ahora creamos varios objetos `xts` para su posterior representación gráfica.
+
+```{r}
+datos1 <- select(PBI_spain, year, lifeExp)
+datos2 <- select(PBI_spain, year, pop)
+datos3 <- select(PBI_spain, year, gdpPercap)
+datos4 <- select(PBI_spain, year, pop, gdpPercap)
+
+obj1_xts <- xts(x = datos1, order.by = datos1$year)
+obj2_xts <- xts(x = datos2, order.by = datos2$year)
+obj3_xts <- xts(x = datos3, order.by = datos3$year)
+obj4_xts <- xts(x = datos4, order.by = datos4$year)
+```
+
+Ahora hacemos una representación gráfica de estos conjuntos.
+
+```{r}
+dygraph(obj1_xts, main = "Esperanza de vida en España") %>%
+  dyHighlight(highlightCircleSize = 5, 
+              highlightSeriesBackgroundAlpha = 0.2,
+              hideOnMouseOut = FALSE) %>%
+  dyAxis("x", drawGrid = TRUE) %>%
+  dyAxis("y", label = "años") %>%
+  dyLegend(show = "follow")  %>%
+  dyOptions(drawPoints = TRUE, pointSize = 2, fillGraph = FALSE, fillAlpha = 0.2) %>%
+  dyRangeSelector()
+```
+
+Hacemos representaciones gráficas del resto de variables, la población y el valor del PIB percápita, como una serie temporal.
+
+```{r}
+dygraph(obj2_xts, main = "Población de España") %>%
+  dyHighlight(highlightCircleSize = 5, 
+              highlightSeriesBackgroundAlpha = 0.2,
+              hideOnMouseOut = FALSE) %>%
+  dyAxis("x", drawGrid = FALSE) %>%
+  dyAxis("y", drawGrid = FALSE, label = "") %>%
+  dyLegend(show = "follow")  %>%
+  dyOptions(drawPoints = TRUE, pointSize = 2, fillGraph = TRUE, fillAlpha = 0.2, colors = 'green') %>%
+  dyRangeSelector()
+```
+
+```{r}
+dygraph(obj3_xts, main = "PIB percápita España") %>%
+  dyHighlight(highlightCircleSize = 5, 
+              highlightSeriesBackgroundAlpha = 0.2,
+              hideOnMouseOut = FALSE) %>%
+  dyAxis("x", drawGrid = TRUE) %>%
+  dyAxis("y", label = "") %>%
+  dyLegend(show = "follow")  %>%
+  dyOptions(drawPoints = TRUE, pointSize = 2, fillGraph = TRUE, fillAlpha = 0.2, colors = 'purple') %>%
+  dyRangeSelector()
+```
+
+Vemos otra opción:
+
+```{r}
+dygraph(obj3_xts, main = "PIB percápita España") %>%
+  dyHighlight(highlightCircleSize = 5, 
+              highlightSeriesBackgroundAlpha = 0.2,
+              hideOnMouseOut = FALSE) %>%
+  dyAxis("x", drawGrid = TRUE) %>%
+  dyAxis("y", label = "") %>%
+  dyLegend(show = "follow")  %>%
+  dyOptions(drawPoints = TRUE, stepPlot=TRUE, pointSize = 2, fillGraph = TRUE, fillAlpha = 0.2, colors = 'green') %>%
+  dyRangeSelector()
+```
+
+Aún otra opción para controlar la leyenda que aparece cuando se mueve el ratón.
+Podemos añadir información mediante la opción `dySeries()`.
+También construimos una banda vertical entre unas fechas determinadas.
+
+```{r}
+dygraph(obj3_xts, main = "PIB percápita España") %>%
+  dySeries("gdpPercap", label="PIB per capita") %>%
+  dyHighlight(highlightCircleSize = 5, 
+              highlightSeriesBackgroundAlpha = 0.8,
+              hideOnMouseOut = FALSE) %>%
+  dyAxis("x", drawGrid = F) %>%
+  dyAxis("y", label = "") %>%
+  dyLegend(show = "follow")  %>%
+  dyShading(from = "1995-01-12", to = "2005-01-12", color = 'yellow') %>%
+  dyOptions(drawPoints = TRUE, pointSize = 2, fillAlpha = 0.8, colors = 'red')
+```
+
+También podemos establecer eventos y límites:
+
+```{r}
+dygraph(obj3_xts, main = "PIB percápita España") %>%
+  dySeries("gdpPercap", label="PIB per capita") %>%
+  dyHighlight(highlightCircleSize = 5, 
+              highlightSeriesBackgroundAlpha = 0.8,
+              hideOnMouseOut = FALSE) %>%
+  dyAxis("x", drawGrid = F) %>%
+  dyAxis("y", label = "") %>%
+  dyLegend(show = "follow")  %>%
+  dyShading(from = "1995-01-12", to = "2005-01-12", color = 'orange') %>%
+  dyEvent("1992-01-12", "Barcelona92", labelLoc = "bottom") %>%
+  dyOptions(drawPoints = TRUE, pointSize = 2, fillAlpha = 0.8, colors = 'blue')
+```
+
+> Ejercicio: En la tabla **datos** tenemos la población, PIB y esperanza de vida de un buen número de países.
+> Compara, mediante gráficas de series temporales, los datos de España (Spain), Alemania y Francia.
+
+# Un tercer ejemplo: inversión I+D+i en España
+
+Comenzamos importando la tabla con los datos sobre inversión I+D+i en españa a lo largo de los años.
+Tenemos:
+
+```{r}
+idi_spain <- read.csv2("datos/gasto_i+d+i.csv")
+```
+
+Ahora debemos convertir en fecha la columna de los años.
+
+```{r}
+idi_spain <- transform(idi_spain, Año = as.Date(as.character(Año), "%Y"))
+#idi_spain$Pub <- as.numeric(as.character(idi_spain$Pub))
+#idi_spain$ES <- as.numeric(as.character(idi_spain$ES))
+#idi_spain$Empresa <- as.numeric(as.character(idi_spain$Empresa))
+head(idi_spain)
+```
+
+Ahora creamos varios objetos `xts` para su posterior representación gráfica.
+
+```{r}
+datos1 <- select(idi_spain, Administración.Pública)
+datos2 <- select(idi_spain, Enseñanza.Superior)
+datos3 <- select(idi_spain, Empresas)
+datos4 <- select(idi_spain, total)
+datos5 <- select(idi_spain, Administración.Pública,Enseñanza.Superior,Empresas)
+datos6 <- select(idi_spain, Administración.Pública,total)
+
+obj1_xts <- xts(x = datos1, order.by = idi_spain$Año)
+obj2_xts <- xts(x = datos2, order.by = idi_spain$Año)
+obj3_xts <- xts(x = datos3, order.by = idi_spain$Año)
+obj4_xts <- xts(x = datos4, order.by = idi_spain$Año)
+obj5_xts <- xts(x = datos5, order.by = idi_spain$Año)
+obj6_xts <- xts(x = datos6, order.by = idi_spain$Año)
+```
+
+Vemos, en primer lugar, un gráfico general sobre el gasto en inversión I+D+i a lo largo de los años.
+
+```{r}
+dygraph(obj1_xts, main = "Gasto I+D+i") %>%
+  dySeries("Administración.Pública", label="Gasto público") %>%
+  dyHighlight(highlightCircleSize = 5, 
+              highlightSeriesBackgroundAlpha = 0.8,
+              hideOnMouseOut = TRUE) %>%
+  dyAxis("x", drawGrid = F) %>%
+  dyAxis("y", label = "") %>%
+  dyLegend(show = "always")  %>%
+  dyOptions(drawPoints = TRUE, pointSize = 2, fillAlpha = 0.8, colors = 'purple')
+```
+
+Vemos ahora varios datos en la misma escala temporal.
+En el siguiente gráfico mostramos los gastos en inversión en I+D+i por el gobierno (público) a través de los presupuestos generales del Estado, por las entidades de enseñanza Superior (universidades) y por las empresas.
+Hemos sombreado en color amarillo el período de la gran crisis que sufrió España durante el período 2008-2014, con el fin de comprobar si afectó, de alguna manera, al gasto por alguna de las entidades objeto del estudio.
+
+Queremos plantear la cuestión de si el gasto en investigación está relacionado con el partido político presente en el poder.
+Para ello establecemos unos eventos gráficos en los años correspondientes a los cambios de tendencia política en el gobierno.
+
+```{r}
+dygraph(obj5_xts, main = "Gasto I+D+i") %>%
+  dySeries("Administración.Pública", label="Pub") %>%
+  dySeries("Enseñanza.Superior", label="UNI") %>%
+  dySeries("Empresas", label="Empresas") %>%
+  dyHighlight(highlightCircleSize = 5, 
+              highlightSeriesBackgroundAlpha = 0.8,
+              hideOnMouseOut = FALSE) %>%
+  dyAxis("x", drawGrid = F) %>%
+  dyAxis("y", label = "") %>%
+  dyLegend(show = "always")  %>%
+  dyOptions(drawPoints = TRUE, pointSize = 2, fillAlpha = 0.8) %>%
+  dyEvent("2011-01-12", "PP:2011", labelLoc = "top", color ="blue") %>%
+  dyEvent("2004-01-12", "PSOE:2004", labelLoc = "top", color ="red")  %>%
+  dyEvent("1996-01-12", "PP:1996", labelLoc = "top", color ="blue")  %>%
+  dyEvent("1983-01-12", "PSOE:1983", labelLoc = "top", color ="red") %>%
+  dyShading(from = "2008-01-12", to = "2014-01-12", color = 'yellow')
+```
+
+En el gráfico siguiente, comparamos el gasto realizado por el Estado (público, Pub) con el gasto total en investigación.
+
+```{r}
+dygraph(obj6_xts, main = "Gasto I+D+i") %>%
+  dySeries("Administración.Pública", label="Pub") %>%
+  dySeries("total", label="Total") %>%
+  dyHighlight(highlightCircleSize = 5, 
+              highlightSeriesBackgroundAlpha = 0.8,
+              hideOnMouseOut = FALSE) %>%
+  dyAxis("x", drawGrid = F) %>%
+  dyAxis("y", label = "") %>%
+  dyLegend(show = "always")  %>%
+  dyOptions(drawPoints = TRUE, pointSize = 2, fillAlpha = 0.8) %>%
+  dyEvent("2011-01-12", "PP:2011", labelLoc = "top", color ="blue") %>%
+  dyEvent("2004-01-12", "PSOE:2004", labelLoc = "top", color ="red")  %>%
+  dyEvent("1996-01-12", "PP:1996", labelLoc = "top", color ="blue")  %>%
+  dyEvent("1983-01-12", "PSOE:1983", labelLoc = "top", color ="red") %>%
+  dyShading(from = "2008-01-12", to = "2014-01-12", color = 'yellow')
+```
+
+Comparamos la inversión pública con el porcentaje dedicado a investigación respecto al PIB.
+Formamos la matriz de datos correspondiente.
+
+```{r}
+datos7 <- select(idi_spain, Pub, inflación)
+
+obj7_xts <- xts(x = datos7, order.by = idi_spain$Año)
+```
+
+Ahora representamos la serie temporal.
+
+```{r}
+dygraph(obj7_xts, main = "Gasto I+D+i respecto al PIB") %>%
+  dySeries("Pub", label="Público") %>%
+  dySeries("inflación", label="inflación") %>%
+  dyHighlight(highlightCircleSize = 5, 
+              highlightSeriesBackgroundAlpha = 0.8,
+              hideOnMouseOut = FALSE) %>%
+  dyAxis("x", drawGrid = F) %>%
+  dyAxis("y", label = "Porcentaje") %>%
+  dyLegend(show = "always")  %>%
+  dyOptions(drawPoints = TRUE, pointSize = 2, fillAlpha = 0.8) %>%
+  dyEvent("2011-01-12", "PP:2011", labelLoc = "top", color ="blue") %>%
+  dyEvent("2004-01-12", "PSOE:2004", labelLoc = "top", color ="red")  %>%
+  dyEvent("1996-01-12", "PP:1996", labelLoc = "top", color ="blue")  %>%
+  dyEvent("1983-01-12", "PSOE:1983", labelLoc = "top", color ="red") %>%
+  dyShading(from = "2008-01-12", to = "2014-01-12", color = 'yellow')
+```
+
+```{r}
+datos8 <- select(idi_spain, relacion_PIB, inflación)
+
+obj8_xts <- xts(x = datos8, order.by = idi_spain$Año)
+```
+
+Representamos
+
+```{r}
+dygraph(obj8_xts, main = "Gasto I+D+i respecto al PIB") %>%
+  dySeries("relacion_PIB", label="PIB %") %>%
+  dySeries("inflación", label="inflación") %>%
+  dyHighlight(highlightCircleSize = 5, 
+              highlightSeriesBackgroundAlpha = 0.8,
+              hideOnMouseOut = FALSE) %>%
+  dyAxis("x", drawGrid = F) %>%
+  dyAxis("y", label = "Porcentaje") %>%
+  dyLegend(show = "always")  %>%
+  dyOptions(drawPoints = TRUE, pointSize = 2, fillAlpha = 0.8) %>%
+  dyEvent("2011-01-12", "PP:2011", labelLoc = "top", color ="blue") %>%
+  dyEvent("2004-01-12", "PSOE:2004", labelLoc = "top", color ="red")  %>%
+  dyEvent("1996-01-12", "PP:1996", labelLoc = "top", color ="blue")  %>%
+  dyEvent("1983-01-12", "PSOE:1983", labelLoc = "top", color ="red") %>%
+  dyShading(from = "2008-01-12", to = "2014-01-12", color = 'yellow')
+```
+
+::: {.tocify-extend-page data-unique="tocify-extend-page" style="height: 0;"}
+:::
